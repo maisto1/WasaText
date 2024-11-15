@@ -1,0 +1,142 @@
+openapu: 3.0.0
+info:
+  title: WasaText API
+  descriptio: WasaText app backend REST API
+  version: 0.0.1
+
+components:
+  schemas:
+    User:
+      title: User
+      description: This object represent a single User
+      type: object
+      properties:
+        id:
+          description: Unique user identifier
+          type: integer
+          example: 1
+          readOnly: true
+        username:
+          description: Username selected on WasaText
+          type: string
+          example: Alessandro
+          pattern: '^[a-zA-Z0-9_]*$'
+          minLength: 3
+          maxLength: 16
+        profilePhoto:
+          description: User profile photo
+          type: string
+          format: uri
+          example: "https://example.com/photo.jpg"
+        conversation:
+          description: User conversation list
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+    Conversation:
+      title: Conversation
+      description: This object represent a single conversation
+      type: object
+      properties:
+        id:
+          description: Unique conversation identifier
+          type: integer
+          example: 1
+          readOnly: true
+        name:
+          description: Conversation's User/Groupchat name 
+          type: string
+          example: Alessandro
+        conversationPhoto:
+          description: Conversation's User/Groupchat photo
+          type: string
+          format: uri
+          example: "https://example.com/photo.jpg"
+        lastMessage: 
+          description: Details of the lasta messagge in the conversation
+          type: object
+          properties:
+            content:
+              description: Text content of the last message
+              type: string
+              example: "Goodbye!"
+            timestamp:
+              description: Timestamp of when the message was sent
+              format: date-time
+              example: "2023-11-15T14:28:00Z"
+        partecipant:
+          description: List of users in the conversation
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        message:
+          description: List of conversation's message
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    Message:
+      title: Message
+      description: This object represent a single message.
+      type: object
+      properties:
+        id:
+          description: Unique identifier for the message
+          type: integer
+          example: 1
+          readOnly: true
+        sender:
+          description: The sender's username
+          type: String
+          example: Alessandro
+        timestamp:
+          description: The date and time when the message was sent
+          type: string
+          format: date-time
+          example: "2023-11-15T14:28:00Z"
+        type:
+          description: The type of the message
+          type: string
+          enum: ['text','photo']
+          example: "text"
+        content:
+          description: The texual content of the message
+          type: string
+          example: "Hi Dear, how are you?"
+          minLength: 1
+          maxLength: 256
+        photo:
+          description: The url of the photo
+          type: string
+          format: uri
+          example: "https://example.com/photo.jpg"
+          nullable: true
+        status:
+          description: The delivery status of the message
+          type: string
+          enum: ['sent','read']
+          example: "sent"
+        comments:
+          description: List of comments fort this message
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+    Comment:
+      title: Comment
+      description:  This object represent a single comment
+      type: object
+      properties:
+        content:
+          description: Content of the comment
+          type: string
+          example: "Nice photo!"
+          minLength: 1
+          maxLength: 50
+        user:
+          description: User's comment
+          type: string
+          example: Alessandro
+        timestamp:
+          description: The time when the comment was created
+          type: string
+          format: date-time
+          example: "2024-11-15T14:30:00Z"
