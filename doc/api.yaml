@@ -125,6 +125,11 @@ components:
       description:  This object represent a single comment
       type: object
       properties:
+        id:
+          description: Unique identifier for the comment
+          type: integer
+          example: 1
+          readOnly: true
         content:
           description: Content of the comment
           type: string
