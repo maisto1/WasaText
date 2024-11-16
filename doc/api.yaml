@@ -33,8 +33,64 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User" 
-                
+                $ref: "#/components/schemas/User"       
+  /users/{id}/username:
+    put:
+      tags: ['user']
+      operationId: setMyUserName
+      summary: Update username
+      description: Allows to update the display name of a specific user
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: The new display name for the user
+                  type: string
+                  example: "Alessandro"
+      responses:
+        '200':
+          description: Username updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404': {description: User not found}
+  /users/{id}/profile-photo:
+    put:
+      tags: ['user']
+      operationId: setMyPhoto
+      summary: Update profile photo
+      description: Allows to update the display photo of a specific user
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uri:
+                  description: The new display photo for the user
+                  type: string
+                  format: uri
+                  example: "https://example.com/photo.jpg"
+      responses:
+        '200':
+          description: Profile photo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404': {description: User not found}
+
+                  
 
 components:
   schemas:
@@ -101,7 +157,7 @@ components:
           type: array
           items:
             type: string
-            
+            example: Alessandro
         message:
           description: List of conversation's message
           type: array
@@ -178,3 +234,13 @@ components:
           type: string
           format: date-time
           example: "2024-11-15T14:30:00Z"
+  parameters:
+    UserID:
+      description: User ID
+      schema:
+        type: integer
+        example: 1
+        readOnly: true
+      name: id
+      in: path
+      required: true
