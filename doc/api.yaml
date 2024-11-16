@@ -33,7 +33,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"       
+                $ref: "#/components/schemas/User"
+  /users/{id}:
+    get:
+      tags: ['user']
+      operationId: getMyConversations
+      summary: Get conversations
+      description: Retrieve all the user conversations
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      responses:
+        "200":
+          description: List of conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
   /users/{id}/username:
     put:
       tags: ['user']
@@ -59,7 +74,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  id:
+                    description: Unique user identifier
+                    type: integer
+                    example: 1
+                    readOnly: true
+                  name:
+                    description: The updated display name the user
+                    type: string
+                    example: Alessandro
         '404': {description: User not found}
   /users/{id}/profile-photo:
     put:
@@ -87,10 +112,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  id:
+                    description: Unique user identifier
+                    type: integer
+                    example: 1
+                    readOnly: true
+                  uri:
+                    description: The updated profile photo of the user
+                    type: string
+                    format: uri
+                    example: "https://example.com/photo.jpg"
         '404': {description: User not found}
-
-                  
 
 components:
   schemas:
@@ -116,11 +150,38 @@ components:
           type: string
           format: uri
           example: "https://example.com/photo.jpg"
-        conversation:
+        conversations:
           description: User conversation list
           type: array
           items:
-            $ref: '#/components/schemas/Conversation'
+            type: object
+            properties:
+              id:
+                description: Unique conversation identifier
+                type: integer
+                example: 1
+                readOnly: true
+              name:
+                description: Conversation's User/Groupchat name 
+                type: string
+                example: Alessandro
+              conversationPhoto:
+                description: Conversation's User/Groupchat photo
+                type: string
+                format: uri
+                example: "https://example.com/photo.jpg"
+              lastMessage: 
+                description: Details of the lasta messagge in the conversation
+                type: object
+                properties:
+                  content:
+                    description: Text content of the last message
+                    type: string
+                    example: "Goodbye!"
+                  timestamp:
+                    description: Timestamp of when the message was sent
+                    format: date-time
+                    example: "2023-11-15T14:28:00Z"
     Conversation:
       title: Conversation
       description: This object represent a single conversation
@@ -140,18 +201,6 @@ components:
           type: string
           format: uri
           example: "https://example.com/photo.jpg"
-        lastMessage: 
-          description: Details of the lasta messagge in the conversation
-          type: object
-          properties:
-            content:
-              description: Text content of the last message
-              type: string
-              example: "Goodbye!"
-            timestamp:
-              description: Timestamp of when the message was sent
-              format: date-time
-              example: "2023-11-15T14:28:00Z"
         partecipant:
           description: List of users in the conversation
           type: array
