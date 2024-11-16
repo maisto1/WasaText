@@ -34,9 +34,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-  /users/{id}:
+  /users/{userId}/conversations:
     get:
-      tags: ['user']
+      tags: ['conversations']
       operationId: getMyConversations
       summary: Get conversations
       description: Retrieve all the user conversations
@@ -49,7 +49,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-  /users/{id}/username:
+  /users/{userId}/conversations/{conversationId}:
+    get:
+      tags: ['conversations']
+      operationId: getConversation
+      summary: Get a single conversation
+      description: Allows to get a specific conversation
+      parameters:
+       - $ref: "#/components/parameters/UserID"
+       - $ref: "#/components/parameters/ConversationID"
+      responses:
+        "200":
+          description: Single conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "404": {description: Conversation not found}
+
+  /users/{userId}/username:
     put:
       tags: ['user']
       operationId: setMyUserName
@@ -86,7 +104,7 @@ paths:
                     type: string
                     example: Alessandro
         '404': {description: User not found}
-  /users/{id}/profile-photo:
+  /users/{userId}/profile-photo:
     put:
       tags: ['user']
       operationId: setMyPhoto
@@ -285,11 +303,20 @@ components:
           example: "2024-11-15T14:30:00Z"
   parameters:
     UserID:
-      description: User ID
+      description: Unique user identificator
       schema:
         type: integer
         example: 1
         readOnly: true
-      name: id
+      name: userId
+      in: path
+      required: true
+    ConversationID:
+      description: Unique conversation identificator
+      schema:
+        type: integer
+        example: 1
+        readOnly: true
+      name: conversationId
       in: path
       required: true
