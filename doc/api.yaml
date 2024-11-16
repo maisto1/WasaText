@@ -66,48 +66,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Conversation"
         "404": {description: Conversation not found}
-    post:
-      tags: ['message']
-      operationId: sendMessage
-      summary: Send a messsage
-      description: Allows to send a messagge in a groupchat or individual chat
-      parameters:
-       - $ref: "#/components/parameters/UserID"
-       - $ref: "#/components/parameters/ConversationID"
-      requestBody:
-        required: true
-        description: Messagge content
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                mediatype:
-                  description: Type of the message
-                  type: string
-                  enum: ['text', 'photo']
-                  example: photo
-                content:
-                  description: The textual content of the message
-                  type: string
-                  minLength: 1
-                  maxLength: 256
-                  example: "Hi Dear, how are you?"
-                photo:
-                  description: URL of the photo, required if type is 'photo'
-                  type: string
-                  format: uri
-                  example: "https://example.com/photo.jpg"
-                  nullable: true
-      responses:
-        '201':
-          description: Message sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Message"
-        '404':
-          description: User or conversation not found
   /users/{userId}/username:
     put:
       tags: ['user']
@@ -184,7 +142,6 @@ paths:
                     format: uri
                     example: "https://example.com/photo.jpg"
         '404': {description: User not found}
-    
 
 components:
   schemas:
