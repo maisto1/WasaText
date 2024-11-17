@@ -194,7 +194,7 @@ paths:
              type: object
              properties:
               conversations:
-                description: List of conversation names that messages can be forwarded to.
+                description: List of conversation names where message will be forwarded.
                 type: array
                 items:
                   type: string
