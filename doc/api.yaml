@@ -34,7 +34,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-  /users/{userId}/conversations:
+  /users/{userId}/conversations/:
     get:
       tags: ['conversations']
       operationId: getMyConversations
@@ -49,6 +49,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+    post:
+      tags: ['conversations']
+      operationId: createConversation
+      summary: Create a private chat or a group
+      description: |-
+        Creates a new conversation.
+        If the type is "private", a single participant must be specified.
+        If the type is "group", no participants are required.
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      requestBody:
+        description: Details for creating the conversation
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  description: Type of the conversation
+                  type: string
+                  enum: ['private','group']
+                partecipant:
+                  description: Partecipant of the private conversation
+                  type: string
+                  example: Luca
+                  nullable: true
+      responses:
+        "201":
+          description: Conversation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "400":
+          description: Invalid input data
+        "404":
+          description: Partecipant not found          
   /users/{userId}/conversations/{conversationId}:
     get:
       tags: ['conversations']
@@ -66,6 +104,111 @@ paths:
               schema:
                 $ref: "#/components/schemas/Conversation"
         "404": {description: Conversation not found}
+  /users/{userId}/conversations/{conversationId}/messages/:
+    post:
+      tags: ['messages']
+      operationId: sendMessage
+      summary: Send a message to a conversation
+      description: Sends a message to a specific conversation. The type of the conversation determines the allowed content.
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+      requestBody:
+        description: Details of the message
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mediatype:
+                  description: Type of the message
+                  type: string
+                  enum: ['text','photo']
+                  example: "text"
+                content:
+                  description: Text content of the message
+                  type: string
+                  example: "Hello!"
+                  minLength: 1
+                  maxLength: 256
+                  nullable: true
+                photo:
+                  description: URL of the photo (required for mediatype photo)
+                  type: string
+                  format: uri
+                  example: "https://example.com/photo.jpg"
+                  nullable: true
+      responses:
+        "201":
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400": {description: Invalid input data}
+        "404": {description: Conversation not found}
+  /users/{userId}/conversations/{conversationId}/messages/{messageId}:
+    delete:
+      tags: ['messages']
+      operationId: deleteMessage
+      summary: Delete a message from a conversation
+      description: Deletes a specific message from a conversation. Only the sender or an admin can delete a message.
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "204": { description: Message deleted successfully }
+        "404": {description: Message or conversation not found}
+  /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/:
+    post:
+      tags: ['comments']
+      operationId: commentMessage
+      summary: Add a comment to a message
+      description: Allows to add a comment to a user message
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+        - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        description: Details of the comment
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  description: Text content of the comment
+                  type: string
+                  example: "Wow!Nice photo"
+                  minLength: 1
+                  maxLength: 50
+      responses:
+        "201":
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400": {description: Invalid input data}
+        "404": {description: Message or Conversation not found}
+  /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/{commentId}:
+    delete:
+      tags: ['comments']
+      operationId: uncommentMessage
+      summary: Delete message comment
+      description: Allows to delete a comment to a user message
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+        - $ref: "#/components/parameters/MessageID"
+        - $ref: "#/components/parameters/CommentID"
+      responses:
+        "204": { description: Comment deleted successfully }
+        "404": {description: Comment not found}
+
   /users/{userId}/username:
     put:
       tags: ['user']
@@ -317,5 +460,23 @@ components:
         example: 1
         readOnly: true
       name: conversationId
+      in: path
+      required: true
+    MessageID:
+      description: Unique message identificator
+      schema:
+        type: integer
+        example: 1
+        readOnly: true
+      name: messageId
+      in: path
+      required: true
+    CommentID:
+      description: Unique comment identificator
+      schema:
+        type: integer
+        example: 1
+        readOnly: true
+      name: commentId
       in: path
       required: true
