@@ -71,10 +71,24 @@ paths:
                   description: Type of the conversation
                   type: string
                   enum: ['private','group']
+                  example: group
+                group-name:
+                  description: Name of the group chat (only if type is group)
+                  type: string
+                  example: "2025 New Year's"
+                  minLength: 1
+                  maxLength: 20
+                  nullable: true
+                group-photo:
+                  description: Photo of the group chat (only if type is group)
+                  type: string
+                  format: uri
+                  example: "https://example/photo.jpg"
+                  nullable: true
                 partecipant:
                   description: Partecipant of the private conversation
                   type: string
-                  example: Luca
+                  example: ""
                   nullable: true
       responses:
         "201":
@@ -86,7 +100,7 @@ paths:
         "400":
           description: Invalid input data
         "404":
-          description: Partecipant not found          
+          description: Partecipant not found
   /users/{userId}/conversations/{conversationId}:
     get:
       tags: ['conversations']
@@ -208,7 +222,46 @@ paths:
       responses:
         "204": { description: Comment deleted successfully }
         "404": {description: Comment not found}
-
+  /users/{userId}/conversations/{conversationId}/members/:
+    post:
+      tags: ['groups']
+      operationId: addToGroup
+      summary: Add a member to a group chat
+      description: Allows adding a user to a specific group chat
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+      requestBody:
+        description: The username of the user to be added to the group conversation
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: The username of the user to be added to the group
+                  type: string
+                  example: Luca
+      responses:
+        "204": { description: "User successfully added to the group"}
+        "403": { description: "To add a user to the group, you must have already started a conversation with them." }
+        "404": { description: "Conversation or user not found"}
+        "409": { description: "User is already a member of the group"}
+  /users/{userId}/conversations/{conversationId}/members/{memberId}:
+    delete:
+      tags: ['groups']
+      operationId: leaveGroup
+      summary: Remove a user from a group conversation or leave
+      description: Allows a user to leave a group conversation or remove a member (admin).
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+        - $ref: "#/components/parameters/MemberID"
+      responses:
+        "204": { description: "User successfully left the group" }
+        "403": {description: "User is not authorized to remove the member (e.g., user is not part of the group)"}
+        "404": { description: "Conversation or user not found" }
   /users/{userId}/username:
     put:
       tags: ['user']
@@ -285,6 +338,95 @@ paths:
                     format: uri
                     example: "https://example.com/photo.jpg"
         '404': {description: User not found}
+  /users/{userId}/conversations/{conversationId}/name:
+    put:
+      tags: ['groups']
+      operationId: setGroupName
+      summary: Update the name of a group conversation
+      description: Allows a user to update the name of a group conversation.
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+      requestBody:
+        description: The new name for the group conversation
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: The new name for the group conversation
+                  type: string
+                  example: "2026 New Year's"
+                  minLength: 1
+                  maxLength: 20
+      responses:
+        "200":
+          description: Group name updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: Unique conversation identifier
+                    type: integer
+                    example: 1
+                  name:
+                    description: The updated name of the group
+                    type: string
+                    example: "2026 New Year's"
+        "400":
+          description: Invalid input data (e.g., the new name is too short/long or empty)
+        "404":
+          description: Conversation not found (group with the provided ID doesn't exist)
+        "403":
+          description: Forbidden (e.g., user not authorized to update the group name)
+  /users/{userId}/conversations/{conversationId}/photo:
+    put:
+      tags: ['groups']
+      operationId: setGroupPhoto
+      summary: Update the photo of a group conversation
+      description: Allows a user to update the photo of a group conversation.
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ConversationID"
+      requestBody:
+        description: The new photo for the group conversation
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uri:
+                  description: The new photo for the group conversation
+                  type: string
+                  format: uri
+                  example: "https://example/newphoto.jpg"
+      responses:
+        "200":
+          description: Group photo updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: Unique conversation identifier
+                    type: integer
+                    example: 1
+                  uri:
+                    description: The updated photo of the group
+                    format: uri
+                    example: "https://example/newphoto.jpg"
+        "400":
+          description: Invalid input data
+        "404":
+          description: Conversation not found
+        "403":
+          description: User not authorized to update the group name
 
 components:
   schemas:
@@ -478,5 +620,14 @@ components:
         example: 1
         readOnly: true
       name: commentId
+      in: path
+      required: true
+    MemberID:
+      description: Unique member group identificator
+      schema:
+        type: integer
+        example: 1
+        readOnly: true
+      name: memberId
       in: path
       required: true
