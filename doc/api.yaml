@@ -264,7 +264,7 @@ paths:
         "404": { description: "Conversation or user not found" }
   /users/{userId}/username:
     put:
-      tags: ['user']
+      tags: ['users']
       operationId: setMyUserName
       summary: Update username
       description: Allows to update the display name of a specific user
@@ -301,7 +301,7 @@ paths:
         '404': {description: User not found}
   /users/{userId}/profile-photo:
     put:
-      tags: ['user']
+      tags: ['users']
       operationId: setMyPhoto
       summary: Update profile photo
       description: Allows to update the display photo of a specific user
@@ -427,6 +427,45 @@ paths:
           description: Conversation not found
         "403":
           description: User not authorized to update the group name
+  /users/:
+    get:
+      tags: ['users']
+      operationId: searchUsers
+      summary: Get all users or search users by username
+      description: |-
+        If no query parameter is provided, it returns all users. 
+        If a query parameter 'username' is specified, it filters users by username.
+      parameters:
+        - name: username
+          in: query
+          description: The username to search for
+          required: false
+          schema:
+            type: string
+            example: Luca
+      responses:
+        "200":
+          description: |- 
+            List of users found or all users if no query provided.
+            If no user is found returns an empty list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    username:
+                      description: User username
+                      type: string
+                      example: Luca202
+                    uri:
+                      description: User profile photo
+                      type: string
+                      format: uri
+                      example: "https://example.com/luca.jpg"
+
+
 
 components:
   schemas:
