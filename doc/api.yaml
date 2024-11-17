@@ -175,6 +175,34 @@ paths:
       responses:
         "204": { description: Message deleted successfully }
         "404": {description: Message or conversation not found}
+  /users/{userId}/conversations/{conversationId}/messages/{messageId}/forward:
+    post:
+      tags: ['messages']
+      operationId: forwardMessage
+      summary: Forward a message to another conversation
+      description: Forwards a message from one conversation to another/multiple.
+      parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        description: The destination conversation to forward the message to
+        required: true
+        content:
+          application/json:
+            schema:
+             type: object
+             properties:
+              conversations:
+                description: List of conversation names that messages can be forwarded to.
+                type: array
+                items:
+                  type: string
+                  example: "2025 New Year's"
+      responses:
+        "204": { description: Message forwarded successfully }
+        "400": { description: Invalid input data}
+        "404": { description: Message or conversation not found}
   /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/:
     post:
       tags: ['comments']
@@ -465,8 +493,6 @@ paths:
                       format: uri
                       example: "https://example.com/luca.jpg"
 
-
-
 components:
   schemas:
     User:
@@ -599,6 +625,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+        isForwarded:
+          description: Message forwarded from another conversation.
+          type: boolean
+          example: false
     Comment:
       title: Comment
       description:  This object represent a single comment
