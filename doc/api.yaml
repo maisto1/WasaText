@@ -288,7 +288,7 @@ paths:
         - $ref: "#/components/parameters/MemberID"
       responses:
         "204": { description: "User successfully left the group" }
-        "403": {description: "User is not authorized to remove the member (e.g., user is not part of the group)"}
+        "403": {description: "User is not authorized to remove the member (user is not part of the group)"}
         "404": { description: "Conversation or user not found" }
   /users/{userId}/username:
     put:
@@ -406,11 +406,11 @@ paths:
                     type: string
                     example: "2026 New Year's"
         "400":
-          description: Invalid input data (e.g., the new name is too short/long or empty)
+          description: Invalid input data (the new name is too short/long or empty)
         "404":
           description: Conversation not found (group with the provided ID doesn't exist)
         "403":
-          description: Forbidden (e.g., user not authorized to update the group name)
+          description: Forbidden (user not authorized to update the group name)
   /users/{userId}/conversations/{conversationId}/photo:
     put:
       tags: ['groups']
