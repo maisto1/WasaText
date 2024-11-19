@@ -12,6 +12,7 @@ paths:
         If the user does not exist, it will be created,
         and an identifier is returned.
         If the user exists, the user identifier is returned.
+      security: []
       operationId: doLogin
       requestBody:
         description: User details
@@ -494,6 +495,10 @@ paths:
                       example: "https://example.com/luca.jpg"
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     User:
       title: User
@@ -700,3 +705,6 @@ components:
       name: memberId
       in: path
       required: true
+
+security:
+  - BearerAuth: []
