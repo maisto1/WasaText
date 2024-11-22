@@ -84,7 +84,7 @@ paths:
               required: 
                 - type 
               properties:
-                type:
+                conversation-type:
                   description: Type of the conversation
                   type: string
                   enum: ['private','group']
@@ -162,7 +162,7 @@ paths:
                   type: string
                   enum: ['text','photo']
                   example: "text"
-                content:
+                message-content:
                   description: Text content of the message
                   type: string
                   pattern: 'ˆ.*?$'
@@ -216,7 +216,7 @@ paths:
             schema:
              type: object
              properties:
-              conversations:
+              conversations-forward:
                 description: List of conversation names where message will be forwarded.
                 type: array
                 items:
@@ -248,7 +248,7 @@ paths:
             schema:
               type: object
               properties:
-                content:
+                comment-content:
                   description: Text content of the comment
                   type: string
                   pattern: 'ˆ.*?$'
@@ -340,7 +340,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                username:
                   description: The new display name for the user
                   pattern: 'ˆ.*?$'
                   type: string
@@ -360,7 +360,7 @@ paths:
                     type: integer
                     example: 1
                     readOnly: true
-                  name:
+                  username:
                     description: The updated display name the user
                     type: string
                     example: Alessandro
@@ -423,7 +423,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                groupname:
                   description: The new name for the group conversation
                   type: string
                   pattern: 'ˆ.*?$'
@@ -442,7 +442,7 @@ paths:
                     description: Unique conversation identifier
                     type: integer
                     example: 1
-                  name:
+                  groupname:
                     description: The updated name of the group
                     type: string
                     example: "2026 New Year's"
@@ -560,7 +560,7 @@ components:
           pattern: '^[a-zA-Z0-9_]*$'
           minLength: 3
           maxLength: 16
-        profilePhoto:
+        profile-photo:
           description: User profile photo URL
           type: string
           format: uri
@@ -584,12 +584,12 @@ components:
                 minLength: 1
                 maxLength: 20
                 example: Alessandro
-              conversationPhoto:
+              conversation-photo:
                 description: Conversation's User/Groupchat photo URL
                 type: string
                 format: uri
                 example: "https://example.com/photo.jpg"
-              lastMessage:
+              last-message:
                 description: Details of the last message in the conversation
                 type: object
                 properties:
@@ -622,7 +622,7 @@ components:
           maxLength: 20
           type: string
           example: Alessandro
-        conversationPhoto:
+        conversation-photo:
           description: "Conversation's User/Groupchat photo URL"
           type: string
           format: uri
@@ -669,7 +669,7 @@ components:
           type: string
           enum: ['text', 'photo']
           example: "text"
-        content:
+        message-content:
           description: The textual content of the message
           type: string
           pattern: 'ˆ.*?$'
@@ -691,7 +691,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
-        isForwarded:
+        is-forwarded:
           description: Indicates if the message was forwarded from another conversation
           type: boolean
           example: false
@@ -705,14 +705,14 @@ components:
           type: integer
           example: 1
           readOnly: true
-        content:
+        comment-content:
           description: Content of the comment
           type: string
           pattern: 'ˆ.*?$'
           example: "Nice photo!"
           minLength: 1
           maxLength: 50
-        user:
+        username:
           description: Username of the user who made the comment
           type: string
           pattern: '^[a-zA-Z0-9_]*$'
