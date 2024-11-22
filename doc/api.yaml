@@ -105,6 +105,8 @@ paths:
                   description: Partecipant of the private conversation
                   type: string
                   pattern: 'ˆ.*?$'
+                  minLength: 3
+                  maxLength: 16
                   example: ""
       responses:
         "201":
@@ -220,6 +222,8 @@ paths:
                 items:
                   type: string
                   pattern: 'ˆ.*?$'
+                  minLength: 1
+                  maxLength: 256
                   example: "2025 New Year's"
       responses:
         "204": { description: Message forwarded successfully }
@@ -296,6 +300,8 @@ paths:
                 username:
                   description: The username of the user to be added to the group
                   pattern: 'ˆ.*?$'
+                  minLength: 3
+                  maxLength: 16
                   type: string
                   example: Luca
       responses:
@@ -338,6 +344,8 @@ paths:
                   description: The new display name for the user
                   pattern: 'ˆ.*?$'
                   type: string
+                  minLength: 3
+                  maxLength: 16
                   example: "Alessandro"
       responses:
         '200':
@@ -573,6 +581,8 @@ components:
                 description: Conversation's User/Groupchat name
                 pattern: '^[a-zA-Z0-9_]*$'
                 type: string
+                minLength: 1
+                maxLength: 20
                 example: Alessandro
               conversationPhoto:
                 description: Conversation's User/Groupchat photo URL
@@ -587,13 +597,14 @@ components:
                     description: Text content of the last message
                     type: string
                     pattern: 'ˆ.*?$'
+                    minLength: 1
+                    maxLength: 256
                     example: "Goodbye!"
                   timestamp:
                     description: Timestamp of when the message was sent
                     type: string
                     format: date-time
                     example: "2023-11-15T14:28:00Z"
-
     Conversation:
       title: Conversation
       description: This object represents a single conversation
@@ -607,6 +618,8 @@ components:
         name:
           description: "Conversation's User/Groupchat name"
           pattern: '^[a-zA-Z0-9_]*$'
+          minLength: 1
+          maxLength: 20
           type: string
           example: Alessandro
         conversationPhoto:
@@ -620,6 +633,8 @@ components:
           items:
             type: string
             pattern: '^[a-zA-Z0-9_]*$'
+            minLength: 3
+            maxLength: 16
             description: Username of a participant
             example: Alessandro
         message:
@@ -627,7 +642,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Message'
-
     Message:
       title: Message
       description: This object represents a single message
@@ -641,6 +655,8 @@ components:
         sender:
           description: The sender's username
           pattern: '^[a-zA-Z0-9_]*$'
+          minLength: 3
+          maxLength: 16
           type: string
           example: Alessandro
         timestamp:
@@ -679,7 +695,6 @@ components:
           description: Indicates if the message was forwarded from another conversation
           type: boolean
           example: false
-
     Comment:
       title: Comment
       description: This object represents a single comment
@@ -701,6 +716,8 @@ components:
           description: Username of the user who made the comment
           type: string
           pattern: '^[a-zA-Z0-9_]*$'
+          minLength: 3
+          maxLength: 16
           example: Alessandro
         timestamp:
           description: The time when the comment was created
