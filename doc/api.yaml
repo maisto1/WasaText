@@ -3,10 +3,24 @@ info:
   title: WasaText API
   description: WasaText app backend REST API
   version: 0.0.1
+tags:
+  - name: login
+    description: Operation related to login
+  - name: conversations
+    description: Operation related to conversations
+  - name: messages
+    description: Operation related to messages
+  - name: comments
+    description: Operation related to comments
+  - name: groups
+    description: Operation related to user's group
+  - name: users
+    description: Operation related to users
 paths:
   /session:
     post:
-      tags: ["login"]
+      tags: 
+        - "login"
       summary: Logs in the user
       description: |-
         If the user does not exist, it will be created,
@@ -39,7 +53,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/UserID"
     get:
-      tags: ['conversations']
+      tags: 
+        - 'conversations'
       operationId: getMyConversations
       summary: Get conversations
       description: Retrieve all the user conversations
@@ -51,7 +66,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
     post:
-      tags: ['conversations']
+      tags: 
+        - 'conversations'
       operationId: createConversation
       summary: Create a private chat or a group
       description: |-
@@ -105,7 +121,8 @@ paths:
       - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/ConversationID"
     get:
-      tags: ['conversations']
+      tags: 
+        - 'conversations'
       operationId: getConversation
       summary: Get a single conversation
       description: Allows to get a specific conversation
@@ -122,7 +139,8 @@ paths:
       - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/ConversationID"
     post:
-      tags: ['messages']
+      tags: 
+        - 'messages'
       operationId: sendMessage
       summary: Send a message to a conversation
       description: Sends a message to a specific conversation. The type of the conversation determines the allowed content.
@@ -167,7 +185,8 @@ paths:
       - $ref: "#/components/parameters/ConversationID"
       - $ref: "#/components/parameters/MessageID"
     delete:
-      tags: ['messages']
+      tags: 
+        - 'messages'
       operationId: deleteMessage
       summary: Delete a message from a conversation
       description: Deletes a specific message from a conversation. Only the sender or an admin can delete a message.
@@ -180,7 +199,8 @@ paths:
       - $ref: "#/components/parameters/ConversationID"
       - $ref: "#/components/parameters/MessageID"
     post:
-      tags: ['messages']
+      tags: 
+        - 'messages'
       operationId: forwardMessage
       summary: Forward a message to another conversation
       description: Forwards a message from one conversation to another/multiple.
@@ -208,7 +228,8 @@ paths:
       - $ref: "#/components/parameters/ConversationID"
       - $ref: "#/components/parameters/MessageID"
     post:
-      tags: ['comments']
+      tags: 
+        - 'comments'
       operationId: commentMessage
       summary: Add a comment to a message
       description: Allows to add a comment to a user message
@@ -242,7 +263,8 @@ paths:
       - $ref: "#/components/parameters/MessageID"
       - $ref: "#/components/parameters/CommentID"
     delete:
-      tags: ['comments']
+      tags: 
+        - 'comments'
       operationId: uncommentMessage
       summary: Delete message comment
       description: Allows to delete a comment to a user message
@@ -254,7 +276,8 @@ paths:
       - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/ConversationID"
     post:
-      tags: ['groups']
+      tags: 
+        - 'groups'
       operationId: addToGroup
       summary: Add a member to a group chat
       description: Allows adding a user to a specific group chat
@@ -281,7 +304,8 @@ paths:
       - $ref: "#/components/parameters/ConversationID"
       - $ref: "#/components/parameters/MemberID"
     delete:
-      tags: ['groups']
+      tags: 
+        - 'groups'
       operationId: leaveGroup
       summary: Remove a user from a group conversation or leave
       description: Allows a user to leave a group conversation or remove a member (admin).
@@ -293,7 +317,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/UserID"
     put:
-      tags: ['users']
+      tags: 
+        - 'users'
       operationId: setMyUserName
       summary: Update username
       description: Allows to update the display name of a specific user
@@ -330,7 +355,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/UserID"
     put:
-      tags: ['users']
+      tags: 
+        - 'users'
       operationId: setMyPhoto
       summary: Update profile photo
       description: Allows to update the display photo of a specific user
@@ -370,7 +396,8 @@ paths:
       - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/ConversationID"
     put:
-      tags: ['groups']
+      tags: 
+        - 'groups'
       operationId: setGroupName
       summary: Update the name of a group conversation
       description: Allows a user to update the name of a group conversation.
@@ -415,7 +442,8 @@ paths:
       - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/ConversationID"
     put:
-      tags: ['groups']
+      tags: 
+        - 'groups'
       operationId: setGroupPhoto
       summary: Update the photo of a group conversation
       description: Allows a user to update the photo of a group conversation.
@@ -456,7 +484,8 @@ paths:
           description: User not authorized to update the group name
   /users/:
     get:
-      tags: ['users']
+      tags: 
+        - 'users'
       operationId: searchUsers
       summary: Get all users or search users by username
       description: |-
