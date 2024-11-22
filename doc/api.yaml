@@ -225,6 +225,8 @@ paths:
                   minLength: 1
                   maxLength: 256
                   example: "2025 New Year's"
+                minItems: 1
+                maxItems: 5
       responses:
         "204": { description: Message forwarded successfully }
         "400": { description: Invalid input data}
@@ -535,6 +537,8 @@ paths:
                       type: string
                       format: uri
                       example: "https://example.com/luca.jpg"
+                minItems: 0
+                maxItems: 20
 
 components:
   securitySchemes:
@@ -605,6 +609,8 @@ components:
                     type: string
                     format: date-time
                     example: "2023-11-15T14:28:00Z"
+          minItems: 0
+          maxItems: 20
     Conversation:
       title: Conversation
       description: This object represents a single conversation
@@ -637,11 +643,15 @@ components:
             maxLength: 16
             description: Username of a participant
             example: Alessandro
+          minItems: 1
+          maxItems: 20
         message:
           description: List of messages in the conversation
           type: array
           items:
             $ref: '#/components/schemas/Message'
+          minItems: 0
+          maxItems: 100
     Message:
       title: Message
       description: This object represents a single message
@@ -691,6 +701,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+          minItems: 0
+          maxItems: 50
         is-forwarded:
           description: Indicates if the message was forwarded from another conversation
           type: boolean
