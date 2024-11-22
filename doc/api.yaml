@@ -571,6 +571,7 @@ components:
                 readOnly: true
               name:
                 description: Conversation's User/Groupchat name
+                pattern: '^[a-zA-Z0-9_]*$'
                 type: string
                 example: Alessandro
               conversationPhoto:
@@ -585,6 +586,7 @@ components:
                   content:
                     description: Text content of the last message
                     type: string
+                    pattern: 'ˆ.*?$'
                     example: "Goodbye!"
                   timestamp:
                     description: Timestamp of when the message was sent
@@ -604,6 +606,7 @@ components:
           readOnly: true
         name:
           description: "Conversation's User/Groupchat name"
+          pattern: '^[a-zA-Z0-9_]*$'
           type: string
           example: Alessandro
         conversationPhoto:
@@ -616,6 +619,7 @@ components:
           type: array
           items:
             type: string
+            pattern: '^[a-zA-Z0-9_]*$'
             description: Username of a participant
             example: Alessandro
         message:
@@ -636,6 +640,7 @@ components:
           readOnly: true
         sender:
           description: The sender's username
+          pattern: '^[a-zA-Z0-9_]*$'
           type: string
           example: Alessandro
         timestamp:
@@ -651,6 +656,7 @@ components:
         content:
           description: The textual content of the message
           type: string
+          pattern: 'ˆ.*?$'
           example: "Hi Dear, how are you?"
           minLength: 1
           maxLength: 256
@@ -687,12 +693,14 @@ components:
         content:
           description: Content of the comment
           type: string
+          pattern: 'ˆ.*?$'
           example: "Nice photo!"
           minLength: 1
           maxLength: 50
         user:
           description: Username of the user who made the comment
           type: string
+          pattern: '^[a-zA-Z0-9_]*$'
           example: Alessandro
         timestamp:
           description: The time when the comment was created
