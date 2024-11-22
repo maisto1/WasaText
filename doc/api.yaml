@@ -81,6 +81,8 @@ paths:
           application/json:
             schema:
               type: object
+              required: 
+                - type 
               properties:
                 type:
                   description: Type of the conversation
@@ -93,18 +95,15 @@ paths:
                   example: "2025 New Year's"
                   minLength: 1
                   maxLength: 20
-                  nullable: true
                 group-photo:
                   description: Photo of the group chat (only if type is group)
                   type: string
                   format: uri
                   example: "https://example/photo.jpg"
-                  nullable: true
                 partecipant:
                   description: Partecipant of the private conversation
                   type: string
                   example: ""
-                  nullable: true
       responses:
         "201":
           description: Conversation created successfully
@@ -151,6 +150,8 @@ paths:
           application/json:
             schema:
               type: object
+              required: 
+                - mediatype 
               properties:
                 mediatype:
                   description: Type of the message
@@ -163,13 +164,11 @@ paths:
                   example: "Hello!"
                   minLength: 1
                   maxLength: 256
-                  nullable: true
                 photo:
                   description: URL of the photo (required for mediatype photo)
                   type: string
                   format: uri
                   example: "https://example.com/photo.jpg"
-                  nullable: true
       responses:
         "201":
           description: Message sent successfully
@@ -527,7 +526,6 @@ components:
       type: http
       scheme: bearer
       description: Authentication scheme using the Bearer token
-
   schemas:
     User:
       title: User
@@ -653,7 +651,6 @@ components:
           type: string
           format: uri
           example: "https://example.com/photo.jpg"
-          nullable: true
         status:
           description: The delivery status of the message
           type: string
@@ -694,7 +691,6 @@ components:
           type: string
           format: date-time
           example: "2024-11-15T14:30:00Z"
-
   parameters:
     UserID:
       description: Unique user identifier
