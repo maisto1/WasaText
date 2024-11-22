@@ -36,13 +36,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
   /users/{userId}/conversations/:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
     get:
       tags: ['conversations']
       operationId: getMyConversations
       summary: Get conversations
       description: Retrieve all the user conversations
-      parameters:
-        - $ref: "#/components/parameters/UserID"
       responses:
         "200":
           description: List of conversation
@@ -58,8 +58,6 @@ paths:
         Creates a new conversation.
         If the type is "private", a single participant must be specified.
         If the type is "group", no participants are required.
-      parameters:
-        - $ref: "#/components/parameters/UserID"
       requestBody:
         description: Details for creating the conversation
         required: true
@@ -103,14 +101,14 @@ paths:
         "404":
           description: Partecipant not found
   /users/{userId}/conversations/{conversationId}:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
     get:
       tags: ['conversations']
       operationId: getConversation
       summary: Get a single conversation
       description: Allows to get a specific conversation
-      parameters:
-       - $ref: "#/components/parameters/UserID"
-       - $ref: "#/components/parameters/ConversationID"
       responses:
         "200":
           description: Single conversation
@@ -120,14 +118,14 @@ paths:
                 $ref: "#/components/schemas/Conversation"
         "404": {description: Conversation not found}
   /users/{userId}/conversations/{conversationId}/messages/:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
     post:
       tags: ['messages']
       operationId: sendMessage
       summary: Send a message to a conversation
       description: Sends a message to a specific conversation. The type of the conversation determines the allowed content.
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
       requestBody:
         description: Details of the message
         required: true
@@ -164,28 +162,28 @@ paths:
         "400": {description: Invalid input data}
         "404": {description: Conversation not found}
   /users/{userId}/conversations/{conversationId}/messages/{messageId}:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/MessageID"
     delete:
       tags: ['messages']
       operationId: deleteMessage
       summary: Delete a message from a conversation
       description: Deletes a specific message from a conversation. Only the sender or an admin can delete a message.
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
-        - $ref: "#/components/parameters/MessageID"
       responses:
         "204": { description: Message deleted successfully }
         "404": {description: Message or conversation not found}
   /users/{userId}/conversations/{conversationId}/messages/{messageId}/forward:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/MessageID"
     post:
       tags: ['messages']
       operationId: forwardMessage
       summary: Forward a message to another conversation
       description: Forwards a message from one conversation to another/multiple.
-      parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-      - $ref: "#/components/parameters/MessageID"
       requestBody:
         description: The destination conversation to forward the message to
         required: true
@@ -205,15 +203,15 @@ paths:
         "400": { description: Invalid input data}
         "404": { description: Message or conversation not found}
   /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/MessageID"
     post:
       tags: ['comments']
       operationId: commentMessage
       summary: Add a comment to a message
       description: Allows to add a comment to a user message
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
-        - $ref: "#/components/parameters/MessageID"
       requestBody:
         description: Details of the comment
         required: true
@@ -238,28 +236,28 @@ paths:
         "400": {description: Invalid input data}
         "404": {description: Message or Conversation not found}
   /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/{commentId}:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/MessageID"
+      - $ref: "#/components/parameters/CommentID"
     delete:
       tags: ['comments']
       operationId: uncommentMessage
       summary: Delete message comment
       description: Allows to delete a comment to a user message
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
-        - $ref: "#/components/parameters/MessageID"
-        - $ref: "#/components/parameters/CommentID"
       responses:
         "204": { description: Comment deleted successfully }
         "404": {description: Comment not found}
   /users/{userId}/conversations/{conversationId}/members/:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
     post:
       tags: ['groups']
       operationId: addToGroup
       summary: Add a member to a group chat
       description: Allows adding a user to a specific group chat
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
       requestBody:
         description: The username of the user to be added to the group conversation
         required: true
@@ -278,27 +276,27 @@ paths:
         "404": { description: "Conversation or user not found"}
         "409": { description: "User is already a member of the group"}
   /users/{userId}/conversations/{conversationId}/members/{memberId}:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/MemberID"
     delete:
       tags: ['groups']
       operationId: leaveGroup
       summary: Remove a user from a group conversation or leave
       description: Allows a user to leave a group conversation or remove a member (admin).
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
-        - $ref: "#/components/parameters/MemberID"
       responses:
         "204": { description: "User successfully left the group" }
         "403": {description: "User is not authorized to remove the member (user is not part of the group)"}
         "404": { description: "Conversation or user not found" }
   /users/{userId}/username:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
     put:
       tags: ['users']
       operationId: setMyUserName
       summary: Update username
       description: Allows to update the display name of a specific user
-      parameters:
-        - $ref: "#/components/parameters/UserID"
       requestBody:
         required: true
         content:
@@ -329,13 +327,13 @@ paths:
                     example: Alessandro
         '404': {description: User not found}
   /users/{userId}/profile-photo:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
     put:
       tags: ['users']
       operationId: setMyPhoto
       summary: Update profile photo
       description: Allows to update the display photo of a specific user
-      parameters:
-        - $ref: "#/components/parameters/UserID"
       requestBody:
         required: true
         content:
@@ -368,14 +366,14 @@ paths:
                     example: "https://example.com/photo.jpg"
         '404': {description: User not found}
   /users/{userId}/conversations/{conversationId}/name:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
     put:
       tags: ['groups']
       operationId: setGroupName
       summary: Update the name of a group conversation
       description: Allows a user to update the name of a group conversation.
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
       requestBody:
         description: The new name for the group conversation
         required: true
@@ -413,14 +411,14 @@ paths:
         "403":
           description: Forbidden (user not authorized to update the group name)
   /users/{userId}/conversations/{conversationId}/photo:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationID"
     put:
       tags: ['groups']
       operationId: setGroupPhoto
       summary: Update the photo of a group conversation
       description: Allows a user to update the photo of a group conversation.
-      parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/ConversationID"
       requestBody:
         description: The new photo for the group conversation
         required: true
