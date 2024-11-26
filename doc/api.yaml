@@ -628,6 +628,11 @@ components:
           maxLength: 20
           type: string
           example: Alessandro
+        conversation-type:
+          description: Type of the conversation
+          type: string
+          enum: ['private','group']
+          example: private
         conversation-photo:
           description: "Conversation's User/Groupchat photo URL"
           type: string
