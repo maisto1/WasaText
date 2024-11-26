@@ -33,11 +33,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"wasatext/service/api"
 
-	"wasatext/service/database"
+	"github.com/maisto1/WasaText/service/api"
 
-	"wasatext/service/globaltime"
+	"github.com/maisto1/WasaText/service/database"
+
+	"github.com/maisto1/WasaText/service/globaltime"
 
 	"github.com/ardanlabs/conf"
 	_ "github.com/mattn/go-sqlite3"

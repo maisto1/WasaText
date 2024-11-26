@@ -2,7 +2,8 @@ package api
 
 import (
 	"net/http"
-	"wasatext/service/api/reqcontext"
+
+	"github.com/maisto1/WasaText/service/api/reqcontext"
 
 	"github.com/julienschmidt/httprouter"
 )

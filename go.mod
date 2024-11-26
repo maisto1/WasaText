@@ -1,5 +1,4 @@
-module wasatext
-
+module github.com/maisto1/WasaText
 
 go 1.17
 
