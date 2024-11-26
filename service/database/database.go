@@ -57,16 +57,15 @@ func New(db *sql.DB) (AppDatabase, error) {
 	TableMapping := map[string]string{
 		"Users":                    usersTableCreationStatement,
 		"Conversations":            conversationsTableCreationStatement,
-		"UserConv":                 userConversationsTableCreationStatement,
-		"ConversationPartecipants": conversationsPartecipantTableCreationStatement,
+		"UserConversations":        userConversationsTableCreationStatement,
+		"ConversationParticipants": conversationsPartecipantTableCreationStatement,
 		"Messages":                 messagesTableCreationStatement,
 		"Comments":                 commentsTableCreationStatement,
 	}
 
 	for tableName, tableCreationStatement := range TableMapping {
 		// Check if the table exist, otherwise we create it
-		var name string
-		err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name=?;`, tableName).Scan(&name)
+		err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name= ? ;`, tableName).Scan(&tableName)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				_, err = db.Exec(tableCreationStatement)
