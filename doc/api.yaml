@@ -48,7 +48,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: object
+                properties:
+                  id:
+                    description: Unique conversation identifier
+                    type: integer
+                    example: 1
+                    readOnly: true
   /users/{userId}/conversations/:
     parameters:
       - $ref: "#/components/parameters/UserID"
@@ -539,7 +545,23 @@ paths:
                       example: "https://example.com/luca.jpg"
                 minItems: 0
                 maxItems: 20
-
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserID"
+    get:
+      tags:
+        - 'users'
+      operationId: getUser
+      summary: Get a single User
+      description: Get a single user data
+      responses:
+        "200":
+          description: User data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404": {description: User not found}
 components:
   securitySchemes:
     BearerAuth:
