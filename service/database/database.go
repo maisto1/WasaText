@@ -33,7 +33,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 )
 
 // AppDatabase is the high level interface for the DB
@@ -55,49 +54,33 @@ func New(db *sql.DB) (AppDatabase, error) {
 		return nil, errors.New("database is required when building a AppDatabase")
 	}
 
-	// Tables
-	tables := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY,
-			username TEXT NOT NULL UNIQUE,
-			profile_photo TEXT
-		);`,
-		`CREATE TABLE IF NOT EXISTS conversations (
-			id INTEGER PRIMARY KEY,
-			name TEXT NOT NULL,
-			conversation_photo TEXT
-		);`,
-		`CREATE TABLE IF NOT EXISTS messages (
-			id INTEGER PRIMARY KEY,
-			sender TEXT NOT NULL,
-			timestamp TEXT NOT NULL,
-			type TEXT NOT NULL,
-			message_content TEXT,
-			photo TEXT,
-			status TEXT NOT NULL,
-			is_forwarded BOOLEAN DEFAULT FALSE,
-			conversation_id INTEGER NOT NULL,
-			FOREIGN KEY (conversation_id) REFERENCES conversations(id)
-		);`,
-		`CREATE TABLE IF NOT EXISTS comments (
-			id INTEGER PRIMARY KEY,
-			comment_content TEXT NOT NULL,
-			username TEXT NOT NULL,
-			timestamp TEXT NOT NULL,
-			message_id INTEGER NOT NULL,
-			FOREIGN KEY (message_id) REFERENCES messages(id)
-		);`,
+	TableMapping := map[string]string{
+		"Users":                    usersTableCreationStatement,
+		"Conversations":            conversationsTableCreationStatement,
+		"UserConv":                 userConversationsTableCreationStatement,
+		"ConversationPartecipants": conversationsPartecipantTableCreationStatement,
+		"Messages":                 messagesTableCreationStatement,
+		"Comments":                 commentsTableCreationStatement,
 	}
 
-	// Create tables
-	for _, table := range tables {
-		_, err := db.Exec(table)
+	for tableName, tableCreationStatement := range TableMapping {
+		// Check if the table exist, otherwise we create it
+		err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name= ? ;`, tableName).Scan(&tableName)
 		if err != nil {
-			return nil, fmt.Errorf("error creating table: %w", err)
+			if errors.Is(err, sql.ErrNoRows) {
+				_, err = db.Exec(tableCreationStatement)
+				if err != nil {
+					return nil, errors.New("error building table " + tableName)
+				}
+			} else {
+				return nil, errors.New("error checking table " + tableName)
+			}
 		}
 	}
 
-	return &appdbimpl{c: db}, nil
+	return &appdbimpl{
+		c: db,
+	}, nil
 }
 
 func (db *appdbimpl) Ping() error {
