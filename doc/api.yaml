@@ -674,7 +674,7 @@ components:
           type: string
           format: date-time
           example: "2023-11-15T14:28:00Z"
-        type:
+        mediatype:
           description: The type of the message
           type: string
           enum: ['text', 'photo']
