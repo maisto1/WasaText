@@ -65,7 +65,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 	for tableName, tableCreationStatement := range TableMapping {
 		// Check if the table exist, otherwise we create it
-		err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name= ? ;`, tableName).Scan(&tableName)
+		var name string
+		err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name=?;`, tableName).Scan(&name)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				_, err = db.Exec(tableCreationStatement)
