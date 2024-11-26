@@ -16,7 +16,10 @@ func (rt *_router) login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		Username string `json:"username"`
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&requestBody)
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + "error decoding request body")
 		w.WriteHeader(http.StatusBadRequest)
