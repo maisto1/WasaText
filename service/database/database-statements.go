@@ -3,14 +3,14 @@ package database
 const (
 	usersTableCreationStatement = `
 	CREATE TABLE Users (
-		ID INT PRIMARY KEY AUTO_INCREMENT,
+		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		Username VARCHAR(255) NOT NULL,
 		ProfilePhoto TEXT DEFAULT NULL
 	);
 	`
 	conversationsTableCreationStatement = `
 	CREATE TABLE Conversations (
-		ID INT PRIMARY KEY AUTO_INCREMENT,
+		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		Name VARCHAR(255) NOT NULL,
 		ConversationType TEXT NOT NULL,
 		ConversationPhoto TEXT DEFAULT NULL
@@ -41,7 +41,7 @@ const (
 
 	messagesTableCreationStatement = `
 	CREATE TABLE Messages (
-		ID INT PRIMARY KEY AUTO_INCREMENT,
+		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		ConversationID INT NOT NULL,
 		SenderID INT NOT NULL,
 		Timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -57,7 +57,7 @@ const (
 
 	commentsTableCreationStatement = `
 	CREATE TABLE Comments (
-		ID INT PRIMARY KEY AUTO_INCREMENT,
+		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		MessageID INT NOT NULL,
 		UserID INT NOT NULL,
 		CommentContent TEXT NOT NULL,
