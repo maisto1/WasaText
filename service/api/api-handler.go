@@ -15,5 +15,7 @@ func (rt *_router) Handler() http.Handler {
 
 	rt.router.GET("/users/:userId/conversations", rt.wrap(rt.GetConversations))
 
+	rt.router.POST("/users/:userId/conversations", rt.wrap(rt.CreateConversation))
+
 	return rt.router
 }

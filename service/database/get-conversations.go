@@ -7,7 +7,7 @@ import (
 	"github.com/maisto1/WasaText/service/components/schemas"
 )
 
-// If the user exist return userId, otherwise create a new user and return new userID
+// Get user preview conversations
 func (db *appdbimpl) GetConversations(userId int64) (*schemas.User, error) {
 	var user schemas.User
 
@@ -40,7 +40,8 @@ func (db *appdbimpl) GetConversations(userId int64) (*schemas.User, error) {
 	user.Conversations = &[]schemas.UserConv{}
 	for rows.Next() {
 		var conv schemas.UserConv
-		var lastMessageContent string
+
+		var lastMessageContent sql.NullString
 		var lastMessageTimestamp sql.NullString
 
 		err = rows.Scan(&conv.ID, &conv.Name, &conv.ConversationPhoto, &lastMessageContent, &lastMessageTimestamp)
@@ -49,10 +50,15 @@ func (db *appdbimpl) GetConversations(userId int64) (*schemas.User, error) {
 		}
 
 		//Build lastmessage only if is presente
-		if lastMessageContent != "" && lastMessageTimestamp.Valid {
+		if lastMessageContent.Valid && lastMessageContent.String != "" && lastMessageTimestamp.Valid {
 			conv.LastMessage = &schemas.LastMessage{
-				Content:   lastMessageContent,
+				Content:   lastMessageContent.String, // Usa il valore della stringa se valido
 				Timestamp: lastMessageTimestamp.String,
+			}
+		} else {
+			conv.LastMessage = &schemas.LastMessage{
+				Content:   "",
+				Timestamp: "",
 			}
 		}
 

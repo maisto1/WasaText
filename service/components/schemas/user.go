@@ -10,9 +10,9 @@ type User struct {
 
 // Represent a single user's conversation
 type UserConv struct {
-	ID                int64        `json:"id" example:"1"`                                             // Unique  identifier
-	Name              string       `json:"name" example:"Alessandro"`                                  // Cnversation name
-	ConversationPhoto string       `json:"conversation-photo" example:"https://example.com/photo.jpg"` // Conversation photo
+	ID                int64        `json:"id" example:"1"`                                                       // Unique  identifier
+	Name              string       `json:"name" example:"Alessandro"`                                            // Cnversation name
+	ConversationPhoto *string      `json:"conversation-photo,omitempty" example:"https://example.com/photo.jpg"` // Conversation photo
 	LastMessage       *LastMessage `json:"last-message,omitempty"`
 }
 

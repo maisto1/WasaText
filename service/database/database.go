@@ -46,6 +46,9 @@ type AppDatabase interface {
 	// Get user preview conversations
 	GetConversations(userId int64) (*schemas.User, error)
 
+	// Create a new conversation
+	SetConversations(userId int64, conversationType string, groupName string, groupPhoto string, partecipantId int64) (*schemas.Conversation, error)
+
 	Ping() error
 }
 

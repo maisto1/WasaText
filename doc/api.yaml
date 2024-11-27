@@ -108,13 +108,10 @@ paths:
                   type: string
                   format: uri
                   example: "https://example/photo.jpg"
-                partecipant:
-                  description: Partecipant of the private conversation
-                  type: string
-                  pattern: 'ˆ.*?$'
-                  minLength: 3
-                  maxLength: 16
-                  example: ""
+                partecipantId:
+                  description: Partecipant unique identifier of the private conversation
+                  type: integer
+                  example: 0
       responses:
         "201":
           description: Conversation created successfully
@@ -535,6 +532,10 @@ paths:
                 items:
                   type: object
                   properties:
+                    id:
+                      description: Unique user identifier
+                      type: integer
+                      example: 1
                     username:
                       description: User username
                       type: string
@@ -646,15 +647,11 @@ components:
           format: uri
           example: "https://example.com/photo.jpg"
         partecipant:
-          description: List of usernames participating in the conversation
+          description: List of user id's participating in the conversation
           type: array
           items:
-            type: string
-            pattern: '^[a-zA-Z0-9_]*$'
-            minLength: 3
-            maxLength: 16
-            description: Username of a participant
-            example: Alessandro
+            type: integer
+            example: 1
           minItems: 1
           maxItems: 20
         message:
