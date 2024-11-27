@@ -5,7 +5,7 @@ const (
 	CREATE TABLE Users (
 		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		Username VARCHAR(255) NOT NULL,
-		ProfilePhoto TEXT DEFAULT NULL
+		ProfilePhoto TEXT
 	);
 	`
 	conversationsTableCreationStatement = `
@@ -13,7 +13,7 @@ const (
 		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		Name VARCHAR(255) NOT NULL,
 		ConversationType TEXT NOT NULL,
-		ConversationPhoto TEXT DEFAULT NULL
+		ConversationPhoto TEXT
 	);
 	`
 
@@ -21,8 +21,8 @@ const (
 	CREATE TABLE UserConversations (
 		UserID INT NOT NULL,
 		ConversationID INT NOT NULL,
-		LastMessageContent TEXT DEFAULT NULL,
-		LastMessageTimestamp DATETIME DEFAULT NULL,
+		LastMessageContent TEXT,
+		LastMessageTimestamp DATETIME,
 		PRIMARY KEY (UserID, ConversationID),
 		FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
 		FOREIGN KEY (ConversationID) REFERENCES Conversations(ID) ON DELETE CASCADE
@@ -46,8 +46,8 @@ const (
 		SenderID INT NOT NULL,
 		Timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		MediaType VARCHAR(50) NOT NULL,
-		MessageContent TEXT DEFAULT NULL,
-		Photo TEXT DEFAULT NULL,
+		MessageContent TEXT,
+		Photo TEXT,
 		Status VARCHAR(50) NOT NULL,
 		IsForwarded BOOLEAN DEFAULT FALSE,
 		FOREIGN KEY (ConversationID) REFERENCES Conversations(ID) ON DELETE CASCADE,
