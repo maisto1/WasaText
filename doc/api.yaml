@@ -55,6 +55,7 @@ paths:
                     type: integer
                     example: 1
                     readOnly: true
+        "400": {description: Invalid input data}
   /users/{userId}/conversations/:
     parameters:
       - $ref: "#/components/parameters/UserID"
@@ -63,7 +64,7 @@ paths:
         - 'conversations'
       operationId: getMyConversations
       summary: Get conversations
-      description: Retrieve all the user conversations
+      description: Retrieve all the user conversations preview
       responses:
         "200":
           description: List of conversation

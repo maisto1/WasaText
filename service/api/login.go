@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
@@ -22,6 +23,19 @@ func (rt *_router) login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	err := decoder.Decode(&requestBody)
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if len(requestBody.Username) < 2 || len(requestBody.Username) > 17 {
+		ctx.Logger.WithError(err).Error(message + "username doesn't match length")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	re := regexp.MustCompile(`^[a-zA-Z0-9_]*$`)
+	if !re.MatchString(requestBody.Username) {
+		ctx.Logger.WithError(err).Error(message + "username doesn't match pattern")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
