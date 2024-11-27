@@ -545,23 +545,7 @@ paths:
                       example: "https://example.com/luca.jpg"
                 minItems: 0
                 maxItems: 20
-  /users/{userId}:
-    parameters:
-      - $ref: "#/components/parameters/UserID"
-    get:
-      tags:
-        - 'users'
-      operationId: getUser
-      summary: Get a single User
-      description: Get a single user data
-      responses:
-        "200":
-          description: User data retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "404": {description: User not found}
+
 components:
   securitySchemes:
     BearerAuth:
