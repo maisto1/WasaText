@@ -33,11 +33,18 @@ package database
 import (
 	"database/sql"
 	"errors"
+
+	"github.com/maisto1/WasaText/service/components/schemas"
 )
 
 // AppDatabase is the high level interface for the DB
 type AppDatabase interface {
-	Login(username string) (uint64, error)
+
+	// Login or Register
+	Login(username string) (int64, error)
+
+	// Get user preview conversations
+	GetConversations(userId int64) (*schemas.User, error)
 
 	Ping() error
 }

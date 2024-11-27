@@ -10,7 +10,7 @@ import (
 	"github.com/maisto1/WasaText/service/api/reqcontext"
 )
 
-func (rt *_router) login(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	message := "Login: "
 
 	var requestBody struct {
@@ -47,10 +47,10 @@ func (rt *_router) login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	message = message + "Authenticated username " + requestBody.Username + " with ID " + strconv.FormatUint(userID, 10) + "\n"
+	message = message + "Authenticated username " + requestBody.Username + " with ID " + strconv.FormatInt(userID, 10) + "\n"
 
 	// response contains the user ID associated to the username
-	response := map[string]uint64{"id": userID}
+	response := map[string]int64{"id": userID}
 
 	w.Header().Set("Content-Type", "application/json")
 

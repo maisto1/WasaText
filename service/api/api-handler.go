@@ -8,10 +8,12 @@ import (
 func (rt *_router) Handler() http.Handler {
 
 	// Login or REgister route
-	rt.router.POST("/session", rt.wrap(rt.login))
+	rt.router.POST("/session", rt.wrap(rt.Login))
 
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)
+
+	rt.router.GET("/users/:userId/conversations", rt.wrap(rt.GetConversations))
 
 	return rt.router
 }

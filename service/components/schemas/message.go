@@ -2,7 +2,7 @@ package schemas
 
 // Represent a single message
 type Message struct {
-	ID             int       `json:"id" example:"1"`                                          // Unique identifier
+	ID             int64     `json:"id" example:"1"`                                          // Unique identifier
 	Sender         string    `json:"sender" example:"Alessandro"`                             // Sender
 	Timestamp      string    `json:"timestamp" example:"2023-11-15T14:28:00Z"`                // Timestamp
 	MediaType      string    `json:"mediatype" example:"text"`                                // Media type of message

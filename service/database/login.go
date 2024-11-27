@@ -6,8 +6,8 @@ import (
 )
 
 // If the user exist return userId, otherwise create a new user and return new userID
-func (db *appdbimpl) Login(username string) (uint64, error) {
-	var user_id uint64
+func (db *appdbimpl) Login(username string) (int64, error) {
+	var user_id int64
 	// search user in the database
 	err := db.c.QueryRow("SELECT ID FROM Users WHERE Username = ?;", username).Scan(&user_id)
 	if errors.Is(err, sql.ErrNoRows) {
