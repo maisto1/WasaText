@@ -33,8 +33,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-
-	"github.com/maisto1/WasaText/service/components/schemas"
 )
 
 // AppDatabase is the high level interface for the DB
@@ -42,12 +40,6 @@ type AppDatabase interface {
 
 	// Login or Register
 	Login(username string) (int64, error)
-
-	// Get user preview conversations
-	GetConversations(userId int64) (*schemas.User, error)
-
-	// Create a new conversation
-	SetConversations(userId int64, conversationType string, groupName string, groupPhoto string, partecipantId int64) (*schemas.Conversation, error)
 
 	Ping() error
 }
@@ -64,12 +56,10 @@ func New(db *sql.DB) (AppDatabase, error) {
 	}
 
 	TableMapping := map[string]string{
-		"Users":                    usersTableCreationStatement,
-		"Conversations":            conversationsTableCreationStatement,
-		"UserConversations":        userConversationsTableCreationStatement,
-		"ConversationParticipants": conversationsPartecipantTableCreationStatement,
-		"Messages":                 messagesTableCreationStatement,
-		"Comments":                 commentsTableCreationStatement,
+		"Users":         usersTableCreationStatement,
+		"Conversations": conversationsTableCreationStatement,
+		"Messages":      messagesTableCreationStatement,
+		"Comments":      commentsTableCreationStatement,
 	}
 
 	for tableName, tableCreationStatement := range TableMapping {
