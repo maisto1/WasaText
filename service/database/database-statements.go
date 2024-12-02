@@ -7,14 +7,13 @@ const (
 		"username"			TEXT NOT NULL UNIQUE,
 		"profile_photo"		BLOB,
 		PRIMARY KEY("user_id" AUTOINCREMENT)
-		CHECK (length("username") >= 3 AND length("username") <= 16)
 	);
 	`
 	conversationsTableCreationStatement = `
 	CREATE TABLE "Conversations" (
 		"conversation_id"	INTEGER NOT NULL UNIQUE,
 		"user_id"			INTEGER NOT NULL,
-		"name"				TEXT CHECK(length("text")<=16),
+		"name"				TEXT,
 		"photo"				BLOB,
 		"type"				TEXT,
 		PRIMARY KEY("conversation_id" AUTOINCREMENT)
@@ -27,7 +26,7 @@ const (
 		"message_id"		INTEGER NOT NULL UNIQUE,
 		"conversation_id"	INTEGER NOT NULL,
 		"user_id"			INTEGER NOT NULL,
-		"content"			TEXT CHECK(length("content")<=256),
+		"content"			TEXT,
 		"media"				BLOB,
 		"type"				TEXT,
 		"timestamp" 		INTEGER 
@@ -44,7 +43,7 @@ const (
 		"comment_id"		INTEGER NOT NULL UNIQUE,
 		"message_id"		INTEGER NOT NULL,
 		"user_id"			INTEGER NOT NULL,
-		"content"			TEXT CHECK(length("content")<=50),
+		"content"			TEXT,
 		"timestamp" 		INTEGER,
 		PRIMARY KEY("comment_id" AUTOINCREMENT),
 		FOREIGN KEY("message_id") REFERENCES "Messages"("message_id") ON DELETE CASCADE,
