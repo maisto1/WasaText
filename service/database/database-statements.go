@@ -29,7 +29,7 @@ const (
 		"content"			TEXT,
 		"media"				BLOB,
 		"type"				TEXT,
-		"timestamp" 		INTEGER 
+		"timestamp" 		INTEGER, 
 		"status"			TEXT,
 		"isForwarded" 		INTEGER,
 		PRIMARY KEY("message_id" AUTOINCREMENT),
