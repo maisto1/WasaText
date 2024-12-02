@@ -2,68 +2,53 @@ package database
 
 const (
 	usersTableCreationStatement = `
-	CREATE TABLE Users (
-		ID INTEGER PRIMARY KEY AUTOINCREMENT,
-		Username VARCHAR(255) NOT NULL,
-		ProfilePhoto TEXT
+	CREATE TABLE "Users" (
+		"user_id"			INTEGER NOT NULL UNIQUE,
+		"username"			TEXT NOT NULL UNIQUE,
+		"profile_photo"		BLOB,
+		PRIMARY KEY("user_id" AUTOINCREMENT)
+		CHECK (length("username") >= 3 AND length("username") <= 16)
 	);
 	`
 	conversationsTableCreationStatement = `
-	CREATE TABLE Conversations (
-		ID INTEGER PRIMARY KEY AUTOINCREMENT,
-		Name VARCHAR(255) NOT NULL,
-		ConversationType TEXT NOT NULL,
-		ConversationPhoto TEXT
-	);
-	`
-
-	userConversationsTableCreationStatement = `
-	CREATE TABLE UserConversations (
-		UserID INT NOT NULL,
-		ConversationID INT NOT NULL,
-		LastMessageContent TEXT,
-		LastMessageTimestamp DATETIME,
-		PRIMARY KEY (UserID, ConversationID),
-		FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
-		FOREIGN KEY (ConversationID) REFERENCES Conversations(ID) ON DELETE CASCADE
-	);
-	`
-
-	conversationsPartecipantTableCreationStatement = `
-	CREATE TABLE ConversationParticipants (
-		ConversationID INT NOT NULL,
-		UserID INT NOT NULL,
-		PRIMARY KEY (ConversationID, UserID),
-		FOREIGN KEY (ConversationID) REFERENCES Conversations(ID) ON DELETE CASCADE,
-		FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
+	CREATE TABLE "Conversations" (
+		"conversation_id"	INTEGER NOT NULL UNIQUE,
+		"user_id"			INTEGER NOT NULL,
+		"name"				TEXT CHECK(length("text")<=16),
+		"photo"				BLOB,
+		"type"				TEXT,
+		PRIMARY KEY("conversation_id" AUTOINCREMENT)
+		FOREIGN KEY("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE
 	);
 	`
 
 	messagesTableCreationStatement = `
-	CREATE TABLE Messages (
-		ID INTEGER PRIMARY KEY AUTOINCREMENT,
-		ConversationID INT NOT NULL,
-		SenderID INT NOT NULL,
-		Timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		MediaType VARCHAR(50) NOT NULL,
-		MessageContent TEXT,
-		Photo TEXT,
-		Status VARCHAR(50) NOT NULL,
-		IsForwarded BOOLEAN DEFAULT FALSE,
-		FOREIGN KEY (ConversationID) REFERENCES Conversations(ID) ON DELETE CASCADE,
-		FOREIGN KEY (SenderID) REFERENCES Users(ID) ON DELETE CASCADE
+	CREATE TABLE "Messages" (
+		"message_id"		INTEGER NOT NULL UNIQUE,
+		"conversation_id"	INTEGER NOT NULL,
+		"user_id"			INTEGER NOT NULL,
+		"content"			TEXT CHECK(length("content")<=256),
+		"media"				BLOB,
+		"type"				TEXT,
+		"timestamp" 		INTEGER 
+		"status"			TEXT,
+		"isForwarded" 		INTEGER,
+		PRIMARY KEY("message_id" AUTOINCREMENT),
+		FOREIGN KEY("conversation_id") REFERENCES "Conversations"("conversation_id") ON DELETE CASCADE,
+		FOREIGN KEY("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE
 	);
 	`
 
 	commentsTableCreationStatement = `
-	CREATE TABLE Comments (
-		ID INTEGER PRIMARY KEY AUTOINCREMENT,
-		MessageID INT NOT NULL,
-		UserID INT NOT NULL,
-		CommentContent TEXT NOT NULL,
-		Timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (MessageID) REFERENCES Messages(ID) ON DELETE CASCADE,
-		FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
+	CREATE TABLE "Comments" (
+		"comment_id"		INTEGER NOT NULL UNIQUE,
+		"message_id"		INTEGER NOT NULL,
+		"user_id"			INTEGER NOT NULL,
+		"content"			TEXT CHECK(length("content")<=50),
+		"timestamp" 		INTEGER,
+		PRIMARY KEY("comment_id" AUTOINCREMENT),
+		FOREIGN KEY("message_id") REFERENCES "Messages"("message_id") ON DELETE CASCADE,
+		FOREIGN KEY("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE
 	);
 	`
 )
