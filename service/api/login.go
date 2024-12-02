@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
@@ -27,36 +26,27 @@ func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	if len(requestBody.Username) < 2 || len(requestBody.Username) > 17 {
-		ctx.Logger.WithError(err).Error(message + "username doesn't match length")
+	if len(requestBody.Username) < 3 || len(requestBody.Username) > 16 {
+		ctx.Logger.WithError(err).Error(message + "username doesn't respect pattern")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	re := regexp.MustCompile(`^[a-zA-Z0-9_]*$`)
-	if !re.MatchString(requestBody.Username) {
-		ctx.Logger.WithError(err).Error(message + "username doesn't match pattern")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Check if the user exists in the database, if it does not exist, create it
-	userID, err := rt.db.Login(requestBody.Username)
+	userId, err := rt.db.Login(requestBody.Username)
 	if err != nil {
 		rt.baseLogger.WithError(err).Error(message + "error checking if user exists")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	message = message + "Authenticated username " + requestBody.Username + " with ID " + strconv.FormatInt(userID, 10) + "\n"
 
-	// response contains the user ID associated to the username
-	response := map[string]int64{"id": userID}
+	message = message + "Authenticated user " + requestBody.Username + " with ID " + strconv.FormatInt(userId, 10) + "\n"
+
+	response := map[string]int64{"id": userId}
 
 	w.Header().Set("Content-Type", "application/json")
-
 	w.WriteHeader(http.StatusCreated)
 
-	err = json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response) // json.encode writes the JSON encoding of response to w
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + "error parsing response")
 		w.WriteHeader(http.StatusInternalServerError)
