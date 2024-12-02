@@ -2,48 +2,43 @@ openapi: 3.0.0
 info:
   title: WasaText API
   description: WasaText app backend REST API
-  version: 0.0.1
-tags:
+  version: 1.0.0
+servers: 
+  - url: "http://localhost:3000"
+    description: localhost server, for development purposses.
+tags: 
   - name: login
-    description: Operation related to login
   - name: conversations
-    description: Operation related to conversations
   - name: messages
-    description: Operation related to messages
   - name: comments
-    description: Operation related to comments
   - name: groups
-    description: Operation related to user's group
   - name: users
-    description: Operation related to users
 paths:
   /session:
     post:
-      tags: 
-        - "login"
+      tags: ["login"]
       summary: Logs in the user
       description: |-
         If the user does not exist, it will be created,
         and an identifier is returned.
         If the user exists, the user identifier is returned.
-      security: []
       operationId: doLogin
-      requestBody:
+      requestBody: 
         description: User details
-        content:
+        content: 
           application/json:
             schema:
               type: object
               properties:
                 name:
                   type: string
-                  example: Alessandro
-                  pattern: '^[a-zA-Z0-9_]*$'
+                  example: Maria
+                  pattern: '^.*?$'
                   minLength: 3
                   maxLength: 16
-        required: true  
+        required: true
       responses:
-        "201": 
+        '201':      
           description: User log-in action successful
           content:
             application/json:
@@ -51,252 +46,314 @@ paths:
                 type: object
                 properties:
                   id:
-                    description: Unique conversation identifier
                     type: integer
                     example: 1
-                    readOnly: true
-        "400": {description: Invalid input data}
-  /users/{userId}/conversations/:
-    parameters:
-      - $ref: "#/components/parameters/UserID"
+  /conversations/:
     get:
-      tags: 
-        - 'conversations'
+      security:
+        - bearerAuth: []
+      tags: ['conversations']
+      summary: "Get all the preview of conversations"
+      description: "Fetch all the preview conversation for the user."
       operationId: getMyConversations
-      summary: Get conversations
-      description: Retrieve all the user conversations preview
       responses:
-        "200":
-          description: List of conversation
+        '200':
+          description: "List of preview conversation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: array
+                minItems: 0
+                maxItems: 100
+                items:
+                  type: object
+                  description: User preview conversation
+                  properties:
+                    id:
+                      description: "Unique identifier for the conversation"
+                      type: integer
+                      example: 1
+                      readOnly: true
+                    name:
+                      description: |-
+                        If it is a group chat, it is the name of the group; 
+                        otherwise, it is the name of the user.
+                      type: string
+                      pattern: '^.*?$'
+                      minLength: 3
+                      maxLength: 16
+                      example: "2025 New Year's" 
+                    conversationPhoto:
+                      description: "Base64 encoded conversation photo"
+                      type: string
+                      format: byte
+                      pattern: "^[A-Za-z0-9+/]+={0,2}$"
+                      minLength: 4
+                      maxLength: 1000000
+                      example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
+                    latestMessage:
+                      allOf:
+                        - $ref: '#/components/schemas/Message'    
+                      description: "Content of the last message in the chat."                 
+        '404': 
+          description: 'User not found.'
     post:
-      tags: 
-        - 'conversations'
+      security:
+        - bearerAuth: []    
+      tags: ['conversations']
+      summary: "Create a new conversation"
+      description: "Create a new conversation with one user or multiple (group)."
       operationId: createConversation
-      summary: Create a private chat or a group
-      description: |-
-        Creates a new conversation.
-        If the type is "private", a single participant must be specified.
-        If the type is "group", no participants are required.
       requestBody:
-        description: Details for creating the conversation
+        description: "Value that allows creation of a new conversation"
         required: true
         content:
           application/json:
             schema:
+              description: "OBJ for create conversation"
               type: object
-              required: 
-                - type 
               properties:
-                conversation-type:
-                  description: Type of the conversation
+                name:
+                  description: |-
+                   If it is a group chat, it is the name of the group; 
+                   otherwise, it is the name of the user.
                   type: string
-                  enum: ['private','group']
-                  example: group
-                group-name:
-                  description: Name of the group chat (only if type is group)
-                  type: string
-                  pattern: 'ˆ.*?$'
+                  pattern: '^.*?$'
+                  minLength: 3
+                  maxLength: 16
                   example: "2025 New Year's"
-                  minLength: 1
-                  maxLength: 20
-                group-photo:
-                  description: Photo of the group chat (only if type is group)
+                conversationType:
+                  description: "The type of the conversation."
                   type: string
-                  format: uri
-                  example: "https://example/photo.jpg"
-                partecipantId:
-                  description: Partecipant unique identifier of the private conversation
-                  type: integer
-                  example: 0
+                  enum: ["private","group"]
+                  example: "group"
+                partecipants:
+                  type: array
+                  description: "Conversation partecipants"
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    description: "Username of the partecipants"
+                    type: string
+                    pattern: '^.*?$'
+                    minLength: 3
+                    maxLength: 16
+                    example: "Luca"
       responses:
-        "201":
-          description: Conversation created successfully
+        "201": 
+          description: "Conversation created successfully"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conversation"
-        "400":
-          description: Invalid input data
-        "404":
-          description: Partecipant not found
-  /users/{userId}/conversations/{conversationId}:
+        "400": 
+          description: "Invalid input data"
+        "404": 
+          description: "User not found"
+  /conversations/{ConversationId}:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/ConversationId"
     get:
-      tags: 
-        - 'conversations'
+      security:
+        - bearerAuth: []
+      tags: ["conversations"]
       operationId: getConversation
-      summary: Get a single conversation
-      description: Allows to get a specific conversation
+      description: "Get a specific conversation by ID."
+      summary: "Get a conversation"
       responses:
         "200":
-          description: Single conversation
+          description: "Conversation message"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Conversation"
-        "404": {description: Conversation not found}
-  /users/{userId}/conversations/{conversationId}/messages/:
+                type: array
+                minItems: 1
+                maxItems: 100
+                items:
+                  $ref: "#/components/schemas/Message"
+        "404": 
+          description: "User or conversation not found"
+  /conversations/{ConversationId}/messages/:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/ConversationId"
     post:
-      tags: 
-        - 'messages'
+      security:
+        - bearerAuth: []    
+      tags: ['messages']
+      description: Send a message in the specific conversation
+      summary: Create a new message
       operationId: sendMessage
-      summary: Send a message to a conversation
-      description: Sends a message to a specific conversation. The type of the conversation determines the allowed content.
       requestBody:
-        description: Details of the message
         required: true
         content:
           application/json:
             schema:
+              description: OBJ for messages
               type: object
-              required: 
-                - mediatype 
               properties:
-                mediatype:
-                  description: Type of the message
+                sender:
+                  description: "The user who send the message"
                   type: string
-                  enum: ['text','photo']
-                  example: "text"
-                message-content:
-                  description: Text content of the message
+                  minLength: 3
+                  maxLength: 16
+                  pattern: '^.*?$'
+                  example: "Alessandro"
+                type:
+                  description: |-
+                    "The type of the message. Media type allows to send image with text"
                   type: string
-                  pattern: 'ˆ.*?$'
-                  example: "Hello!"
+                  enum: ["text","media"]
+                  example: "media"
+                content:
+                  description: "This field represent the text body of the message."
+                  type: string
                   minLength: 1
                   maxLength: 256
-                photo:
-                  description: URL of the photo (required for mediatype photo)
+                  pattern: '^.*?$'
+                  example: "Yo, check my new Shoes!"
+                media:
+                  description: "Base64 encoded media"
                   type: string
-                  format: uri
-                  example: "https://example.com/photo.jpg"
+                  format: byte
+                  pattern: "^[A-Za-z0-9+/]+={0,2}$"
+                  minLength: 4
+                  maxLength: 1000000
+                  example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
       responses:
         "201":
-          description: Message sent successfully
+          description: "Message is sent successfully"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-        "400": {description: Invalid input data}
-        "404": {description: Conversation not found}
-  /users/{userId}/conversations/{conversationId}/messages/{messageId}:
+        "400": 
+          description: "Invalid input data"
+        "404": 
+          description: "User or conversation not found"
+  /conversations/{ConversationId}/messages/{MessageId}:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-      - $ref: "#/components/parameters/MessageID"
+      - $ref: "#/components/parameters/ConversationId"
+      - $ref: "#/components/parameters/MessageId"
     delete:
-      tags: 
-        - 'messages'
+      security:
+        - bearerAuth: []
+      tags: ["messages"]
       operationId: deleteMessage
-      summary: Delete a message from a conversation
-      description: Deletes a specific message from a conversation. Only the sender or an admin can delete a message.
+      summary: "Delete a message from a conversation"
+      description: "Deletes a specific message from a conversation. Only the sender or an admin can delete a message."
       responses:
-        "204": { description: Message deleted successfully }
-        "404": {description: Message or conversation not found}
-  /users/{userId}/conversations/{conversationId}/messages/{messageId}/forward:
-    parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-      - $ref: "#/components/parameters/MessageID"
+        "204": 
+          description: "Message deleted successfully"
+        "404": 
+          description: "Message or conversation not found"
     post:
-      tags: 
-        - 'messages'
+      security:
+        - bearerAuth: []
+      tags: ["messages"]
       operationId: forwardMessage
-      summary: Forward a message to another conversation
-      description: Forwards a message from one conversation to another/multiple.
+      summary: "Forward a message to another conversation"
+      description: "Forwards a message from one conversation to another."
       requestBody:
-        description: The destination conversation to forward the message to
-        required: true
-        content:
-          application/json:
-            schema:
-             type: object
-             properties:
-              conversations-forward:
-                description: List of conversation names where message will be forwarded.
-                type: array
-                items:
-                  type: string
-                  pattern: 'ˆ.*?$'
-                  minLength: 1
-                  maxLength: 256
-                  example: "2025 New Year's"
-                minItems: 1
-                maxItems: 5
-      responses:
-        "204": { description: Message forwarded successfully }
-        "400": { description: Invalid input data}
-        "404": { description: Message or conversation not found}
-  /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/:
-    parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-      - $ref: "#/components/parameters/MessageID"
-    post:
-      tags: 
-        - 'comments'
-      operationId: commentMessage
-      summary: Add a comment to a message
-      description: Allows to add a comment to a user message
-      requestBody:
-        description: Details of the comment
+        description: "The destination conversation to forward the message to"
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                comment-content:
-                  description: Text content of the comment
+                conversationId:
+                  type: integer
+                  example: 1
+      responses:
+        '204':
+          description: "Message forwarded"
+        '404':
+          description: "Message not found"
+  /conversations/{ConversationId}/messages/{MessageId}/comments:
+    parameters:
+      - $ref: "#/components/parameters/ConversationId"
+      - $ref: "#/components/parameters/MessageId"
+    get:
+      security:
+        - bearerAuth: []
+      tags: ["comments"]
+      summary: "Get message comments"
+      operationId: getComments
+      description: "Get all the comments for a specific message."
+      responses:
+        '200':
+          description: "List of comments"
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                maxItems: 100
+                items:
+                  $ref: "#/components/schemas/Comment"
+        '404':
+          description: "Message not found"
+    post:
+      security:
+        - bearerAuth: []
+      tags: ["comments"]
+      summary: "Add a comment to a message"
+      description: "Allows to add a comment to a user message"
+      operationId: commentMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  description: Content of the comment
                   type: string
-                  pattern: 'ˆ.*?$'
-                  example: "Wow!Nice photo"
+                  pattern: '^.*?$'
+                  example: "Nice photo!"
                   minLength: 1
                   maxLength: 50
       responses:
         "201":
-          description: Comment added successfully
+          description: "Comment added successfully"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Comment"
-        "400": {description: Invalid input data}
-        "404": {description: Message or Conversation not found}
-  /users/{userId}/conversations/{conversationId}/messages/{messageId}/comments/{commentId}:
+        "400": 
+          description: "Invalid input data"
+        "404": 
+          description: "Message or Conversation not found"
+  /conversations/{ConversationId}/messages/{MessageId}/comments/{CommentId}:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-      - $ref: "#/components/parameters/MessageID"
-      - $ref: "#/components/parameters/CommentID"
+      - $ref: "#/components/parameters/ConversationId"
+      - $ref: "#/components/parameters/MessageId"
+      - $ref: "#/components/parameters/CommentId"
     delete:
-      tags: 
-        - 'comments'
+      security:
+        - bearerAuth: []
+      tags: ['comments']
       operationId: uncommentMessage
-      summary: Delete message comment
-      description: Allows to delete a comment to a user message
+      summary: "Delete message comment"
+      description: "Allows to delete a comment to a user message"
       responses:
-        "204": { description: Comment deleted successfully }
-        "404": {description: Comment not found}
-  /users/{userId}/conversations/{conversationId}/members/:
+        "204": 
+          description: "Comment deleted successfully"
+        "404": 
+          description: "Comment not found"
+  /conversations/{ConversationId}/members/:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/ConversationId"
     post:
-      tags: 
-        - 'groups'
+      security:
+        - bearerAuth: []
+      tags: ['groups']
       operationId: addToGroup
-      summary: Add a member to a group chat
-      description: Allows adding a user to a specific group chat
+      summary: "Add a member to a group chat"
+      description: "Allows adding a user to a specific group chat"
       requestBody:
-        description: The username of the user to be added to the group conversation
+        description: "The username of the user to be added to the group conversation"
         required: true
         content:
           application/json:
@@ -304,493 +361,386 @@ paths:
               type: object
               properties:
                 username:
-                  description: The username of the user to be added to the group
-                  pattern: 'ˆ.*?$'
+                  description: "The username of the user to be added to the group chat"
+                  pattern: '^.*?$'
                   minLength: 3
                   maxLength: 16
                   type: string
                   example: Luca
       responses:
-        "204": { description: "User successfully added to the group"}
-        "403": { description: "To add a user to the group, you must have already started a conversation with them." }
-        "404": { description: "Conversation or user not found"}
-        "409": { description: "User is already a member of the group"}
-  /users/{userId}/conversations/{conversationId}/members/{memberId}:
+        "204": 
+          description: "User successfully added to the group"
+        "400": 
+          description: "Invalid input data"
+        "403": 
+          description: "To add a user to the group, you must have already started a conversation with them."
+        "404": 
+          description: "Conversation or user not found"
+        "409": 
+          description: "User is already a member of the group"
+  /conversations/{ConversationId}/members/{UserId}:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-      - $ref: "#/components/parameters/MemberID"
+      - $ref: "#/components/parameters/ConversationId"
+      - $ref: "#/components/parameters/UserId"
     delete:
-      tags: 
-        - 'groups'
+      security:
+        - bearerAuth: []
+      tags: ['groups']
       operationId: leaveGroup
-      summary: Remove a user from a group conversation or leave
-      description: Allows a user to leave a group conversation or remove a member (admin).
+      summary: "Remove a user from a group conversation or leave"
+      description: "Allows a user to leave a group conversation or remove a member."
       responses:
-        "204": { description: "User successfully left the group" }
-        "403": {description: "User is not authorized to remove the member (user is not part of the group)"}
-        "404": { description: "Conversation or user not found" }
-  /users/{userId}/username:
+        "204": 
+          description: "User successfully left the group"
+        "403": 
+          description: "User is not authorized to remove the member (user is not part of the group)"
+        "404": 
+          description: "Conversation or user not found"
+  /conversations/{ConversationId}/name:
     parameters:
-      - $ref: "#/components/parameters/UserID"
+      - $ref: "#/components/parameters/ConversationId"
     put:
-      tags: 
-        - 'users'
-      operationId: setMyUserName
-      summary: Update username
-      description: Allows to update the display name of a specific user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  description: The new display name for the user
-                  pattern: 'ˆ.*?$'
-                  type: string
-                  minLength: 3
-                  maxLength: 16
-                  example: "Alessandro"
-      responses:
-        '200':
-          description: Username updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    description: Unique user identifier
-                    type: integer
-                    example: 1
-                    readOnly: true
-                  username:
-                    description: The updated display name the user
-                    type: string
-                    example: Alessandro
-        '404': {description: User not found}
-  /users/{userId}/profile-photo:
-    parameters:
-      - $ref: "#/components/parameters/UserID"
-    put:
-      tags: 
-        - 'users'
-      operationId: setMyPhoto
-      summary: Update profile photo
-      description: Allows to update the display photo of a specific user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                uri:
-                  description: The new display photo for the user
-                  type: string
-                  format: uri
-                  example: "https://example.com/photo.jpg"
-      responses:
-        '200':
-          description: Profile photo updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    description: Unique user identifier
-                    type: integer
-                    example: 1
-                    readOnly: true
-                  uri:
-                    description: The updated profile photo of the user
-                    type: string
-                    format: uri
-                    example: "https://example.com/photo.jpg"
-        '404': {description: User not found}
-  /users/{userId}/conversations/{conversationId}/name:
-    parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
-    put:
-      tags: 
-        - 'groups'
+      security:
+        - bearerAuth: []
+      tags: ["groups"]
       operationId: setGroupName
-      summary: Update the name of a group conversation
-      description: Allows a user to update the name of a group conversation.
+      summary: "Update the name of a group conversation"
+      description: "Allows a user to update the name of a group conversation."
       requestBody:
-        description: The new name for the group conversation
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                groupname:
-                  description: The new name for the group conversation
+                groupName:
+                  description: "The new name for the group conversation"
                   type: string
-                  pattern: 'ˆ.*?$'
+                  pattern: '^.*?$'
                   example: "2026 New Year's"
                   minLength: 1
                   maxLength: 20
       responses:
-        "200":
-          description: Group name updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    description: Unique conversation identifier
-                    type: integer
-                    example: 1
-                  groupname:
-                    description: The updated name of the group
-                    type: string
-                    example: "2026 New Year's"
-        "400":
-          description: Invalid input data (the new name is too short/long or empty)
-        "404":
-          description: Conversation not found (group with the provided ID doesn't exist)
-        "403":
-          description: Forbidden (user not authorized to update the group name)
-  /users/{userId}/conversations/{conversationId}/photo:
+              "204":
+                description: "Group name updated successfully"
+              "400":
+                description: "Invalid input data (the new name is too short/long or empty)"
+              "404":
+                description: "Conversation not found (group with the provided ID doesn't exist)"
+              "403":
+                description: "Forbidden (user not authorized to update the group name)"
+  /conversations/{ConversationId}/photo:
     parameters:
-      - $ref: "#/components/parameters/UserID"
-      - $ref: "#/components/parameters/ConversationID"
+      - $ref: "#/components/parameters/ConversationId"
     put:
-      tags: 
-        - 'groups'
+      security:
+        - bearerAuth: []
+      tags: ["groups"]
       operationId: setGroupPhoto
-      summary: Update the photo of a group conversation
-      description: Allows a user to update the photo of a group conversation.
+      summary: "Update the photo of a group conversation"
+      description: "Allows a user to update the photo of a group conversation."
       requestBody:
-        description: The new photo for the group conversation
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                uri:
-                  description: The new photo for the group conversation
+                groupPhoto:
+                  description: "Base64 encoded conversation photo"
                   type: string
-                  format: uri
-                  example: "https://example/newphoto.jpg"
+                  format: byte
+                  pattern: "^[A-Za-z0-9+/]+={0,2}$"
+                  minLength: 4
+                  maxLength: 1000000
+                  example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
       responses:
-        "200":
-          description: Group photo updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    description: Unique conversation identifier
-                    type: integer
-                    example: 1
-                  uri:
-                    description: The updated photo of the group
-                    format: uri
-                    example: "https://example/newphoto.jpg"
-        "400":
-          description: Invalid input data
-        "404":
-          description: Conversation not found
-        "403":
-          description: User not authorized to update the group name
+              "204":
+                description: "Group photo updated successfully"
+              "400":
+                description: "Invalid input data"
+              "404":
+                description: "Conversation not found (group with the provided ID doesn't exist)"
+              "403":
+                description: "Forbidden (user not authorized to update the group name)"
   /users/:
     get:
-      tags: 
-        - 'users'
+      security:
+        - bearerAuth: []
+      tags: ['users']
       operationId: searchUsers
       summary: Get all users or search users by username
       description: |-
         If no query parameter is provided, it returns all users. 
         If a query parameter 'username' is specified, it filters users by username.
       parameters:
-        - name: username
+        - name : username
           in: query
-          description: The username to search for
           required: false
+          description: "The username to search for"
           schema:
             type: string
-            example: Luca
+            minLength: 3
+            maxLength: 16
+            pattern: "^[a-zA-Z0-9_-]+$"
+            example: "Luca"
       responses:
         "200":
           description: |- 
-            List of users found or all users if no query provided.
-            If no user is found returns an empty list
+            "List of users found or all users if no query provided.
+            If no user is found returns an empty list"
           content:
             application/json:
               schema:
+                description: User List
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      description: Unique user identifier
-                      type: integer
-                      example: 1
-                    username:
-                      description: User username
-                      type: string
-                      example: Luca202
-                    uri:
-                      description: User profile photo
-                      type: string
-                      format: uri
-                      example: "https://example.com/luca.jpg"
+                  $ref: '#/components/schemas/User'
                 minItems: 0
                 maxItems: 20
+  /users/profile/username:
+    put:
+      security:
+        - bearerAuth: []
+      tags: ['users']
+      operationId: setMyUserName
+      summary: "Update username"
+      description: "Allows to update the display name of a specific user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: "The new display name for the user"
+                  pattern: '^.*?$'
+                  type: string
+                  minLength: 3
+                  maxLength: 16
+                  example: "Alessandro"
+      responses:
+        '204':
+          description: "Username updated successfully"
+        '404': 
+          description: "User not found"
+  /users/prfile/photo:
+    put:
+      security:
+        - bearerAuth: []
+      tags: ['users']
+      operationId: setMyPhoto
+      summary: "Update profile photo"
+      description: "Allows to update the display photo of a specific user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                photo:
+                  description: "Base64 encoded conversation photo"
+                  type: string
+                  format: byte
+                  pattern: "^[A-Za-z0-9+/]+={0,2}$"
+                  minLength: 4
+                  maxLength: 1000000
+                  example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
+      responses:
+        '204':
+          description: "Profile photo updated successfully"
+        '404': 
+          description: "User not found"
+
+
 
 components:
   securitySchemes:
-    BearerAuth:
+    bearerAuth:
+      description: |
+        User authentication with the user ID passed
+        as an authentication token.
+        Of course, that is extremely insecure, but it's done
+        according to the project specification.
       type: http
       scheme: bearer
-      description: Authentication scheme using the Bearer token
   schemas:
     User:
       title: User
-      description: This object represents a single User
+      description: "This object represent a single user."
       type: object
       properties:
         id:
-          description: Unique user identifier
+          description: "Unique identifier for user."
           type: integer
           example: 1
           readOnly: true
         username:
-          description: Username selected on WasaText
+          description: "Username selected on WasaText"
           type: string
-          example: Alessandro
-          pattern: '^[a-zA-Z0-9_]*$'
+          example: "Alessandro"
+          pattern: '^.*?$'
           minLength: 3
           maxLength: 16
-        profile-photo:
-          description: User profile photo URL
+        profilePhoto:
+          description: Base64 encoded profile photo
           type: string
-          format: uri
-          example: "https://example.com/photo.jpg"
-        conversations:
-          description: List of conversations the user is part of
-          type: array
-          items:
-            type: object
-            description: A conversation object
-            properties:
-              id:
-                description: Unique conversation identifier
-                type: integer
-                example: 1
-                readOnly: true
-              name:
-                description: Conversation's User/Groupchat name
-                pattern: '^[a-zA-Z0-9_]*$'
-                type: string
-                minLength: 1
-                maxLength: 20
-                example: Alessandro
-              conversation-photo:
-                description: Conversation's User/Groupchat photo URL
-                type: string
-                format: uri
-                example: "https://example.com/photo.jpg"
-              last-message:
-                description: Details of the last message in the conversation
-                type: object
-                properties:
-                  content:
-                    description: Text content of the last message
-                    type: string
-                    pattern: 'ˆ.*?$'
-                    minLength: 1
-                    maxLength: 256
-                    example: "Goodbye!"
-                  timestamp:
-                    description: Timestamp of when the message was sent
-                    type: string
-                    format: date-time
-                    example: "2023-11-15T14:28:00Z"
-          minItems: 0
-          maxItems: 20
+          format: byte
+          pattern: "^[A-Za-z0-9+/]+={0,2}$"
+          minLength: 4
+          maxLength: 1000000
+          example: "SGVsbG8gd29ybGQ="
     Conversation:
       title: Conversation
-      description: This object represents a single conversation
+      description: "This object represent a single user's conversation."
       type: object
       properties:
         id:
-          description: Unique conversation identifier
+          description: "Unique identifier for conversation."
           type: integer
           example: 1
           readOnly: true
         name:
-          description: "Conversation's User/Groupchat name"
-          pattern: '^[a-zA-Z0-9_]*$'
-          minLength: 1
-          maxLength: 20
+          description: |-
+            If it is a group chat, it is the name of the group; 
+            otherwise, it is the name of the user.
           type: string
-          example: Alessandro
-        conversation-type:
-          description: Type of the conversation
+          pattern: '^.*?$'
+          minLength: 3
+          maxLength: 16
+          example: "2025 New Year's"
+        conversationPhoto:
+          description: "Base64 encoded conversation photo"
           type: string
-          enum: ['private','group']
-          example: private
-        conversation-photo:
-          description: "Conversation's User/Groupchat photo URL"
+          format: byte
+          pattern: "^[A-Za-z0-9+/]+={0,2}$"
+          minLength: 4
+          maxLength: 1000000
+          example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
+        conversationType:
+          description: "The type of the conversation."
           type: string
-          format: uri
-          example: "https://example.com/photo.jpg"
-        partecipant:
-          description: List of user id's participating in the conversation
+          enum: ["private","group"]
+          example: "group"
+        partecipants:
+          description: "Array that contains all the users that are included in this conversation"
           type: array
-          items:
-            type: integer
-            example: 1
           minItems: 1
-          maxItems: 20
-        message:
-          description: List of messages in the conversation
-          type: array
+          maxItems: 50
           items:
-            $ref: '#/components/schemas/Message'
-          minItems: 0
-          maxItems: 100
-    Message:
+            $ref: "#/components/schemas/User"
+    Message: 
       title: Message
-      description: This object represents a single message
+      description: "This object represent a single message in a conversation."
       type: object
       properties:
         id:
-          description: Unique identifier for the message
+          description: "Unique identifier for conversation."
           type: integer
           example: 1
           readOnly: true
-        sender:
-          description: The sender's username
-          pattern: '^[a-zA-Z0-9_]*$'
-          minLength: 3
-          maxLength: 16
-          type: string
-          example: Alessandro
         timestamp:
           description: The date and time when the message was sent
           type: string
           format: date-time
           example: "2023-11-15T14:28:00Z"
-        mediatype:
-          description: The type of the message
+        sender:
+          description: "The user who send the message"
+          allOf:
+            - $ref: "#/components/schemas/User"          
+        type:
+          description: |-
+            "The type of the message. Media type allows to send image with text"
           type: string
-          enum: ['text', 'photo']
-          example: "text"
-        message-content:
-          description: The textual content of the message
+          enum: ["text","media"]
+          example: "media"
+        content:
+          description: "This field represent the text body of the message."
           type: string
-          pattern: 'ˆ.*?$'
-          example: "Hi Dear, how are you?"
           minLength: 1
           maxLength: 256
-        photo:
-          description: The URL of the photo (nullable)
+          pattern: '^.*?$'
+          example: "Yo, check my new Shoes!"
+        media:
+          description: "Base64 encoded media"
           type: string
-          format: uri
-          example: "https://example.com/photo.jpg"
+          format: byte
+          pattern: "^[A-Za-z0-9+/]+={0,2}$"
+          minLength: 4
+          maxLength: 1000000
+          example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
         status:
-          description: The delivery status of the message
+          description: "The status of the messaged"
           type: string
-          enum: ['sent', 'read']
-          example: "sent"
-        comments:
-          description: List of comments for this message
-          type: array
-          items:
-            $ref: '#/components/schemas/Comment'
-          minItems: 0
-          maxItems: 50
-        is-forwarded:
-          description: Indicates if the message was forwarded from another conversation
+          enum: ['sent','read']
+          example: 'sent'
+        isForwarded:
+          description:  Indicates if the message was forwarded from another conversation."
           type: boolean
           example: false
     Comment:
       title: Comment
-      description: This object represents a single comment
+      description: "This object represent a single message comment of a conversation."
       type: object
       properties:
         id:
-          description: Unique identifier for the comment
+          description: "Unique identifier for conversation."
           type: integer
           example: 1
           readOnly: true
-        comment-content:
+        content:
           description: Content of the comment
           type: string
-          pattern: 'ˆ.*?$'
+          pattern: '^.*?$'
           example: "Nice photo!"
           minLength: 1
           maxLength: 50
-        username:
-          description: Username of the user who made the comment
-          type: string
-          pattern: '^[a-zA-Z0-9_]*$'
-          minLength: 3
-          maxLength: 16
-          example: Alessandro
+        sender:
+          description: "The user who submit the comment"
+          allOf:
+            - $ref: "#/components/schemas/User"
         timestamp:
-          description: The time when the comment was created
+          description: The date and time when the message was sent
           type: string
           format: date-time
-          example: "2024-11-15T14:30:00Z"
+          example: "2023-11-15T14:28:00Z"
   parameters:
-    UserID:
+    UserId:
       description: Unique user identifier
       schema:
         type: integer
         example: 1
         readOnly: true
-      name: userId
+      name: UserId
       in: path
       required: true
-    ConversationID:
+    ConversationId:
       description: Unique conversation identifier
       schema:
         type: integer
         example: 1
         readOnly: true
-      name: conversationId
+      name: ConversationId
       in: path
       required: true
-    MessageID:
+    MessageId:
       description: Unique message identifier
       schema:
         type: integer
         example: 1
         readOnly: true
-      name: messageId
+      name: MessageId
       in: path
       required: true
-    CommentID:
+    CommentId:
       description: Unique comment identifier
       schema:
         type: integer
         example: 1
         readOnly: true
-      name: commentId
+      name: CommentId
       in: path
       required: true
-    MemberID:
-      description: Unique group member identifier
-      schema:
-        type: integer
-        example: 1
-        readOnly: true
-      name: memberId
-      in: path
-      required: true
-
-security:
-  - BearerAuth: []
+  
