@@ -21,7 +21,8 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
 	}
 
 	rows, err := db.c.Query(`
-		SELECT Conversations.conversation_id as Conversations_id, Conversations.name, Conversations.photo
+		SELECT Conversations.conversation_id as Conversations_id,  COALESCE(p.conversation_name, Conversations.name) AS name, 
+        COALESCE(p.conversation_photo, Conversations.photo) AS photo
 		FROM Partecipants p
 		JOIN Conversations ON Conversations.conversation_id = p.conversation_id
 		WHERE p.user_id = ?
@@ -115,6 +116,9 @@ func (db *appdbimpl) GetLatestMessage(conversation_id int64) (models.Message, er
 	return message, nil
 }
 
-// func (db *appdbimpl) CreateCOnversation(user_id int64) (bool, error) {
+// Create a new conevrsation
+// func (db *appdbimpl) CreateConversation(user_id int64, name string, photo []byte, typeConv string) (bool, error) {
+
+// 	err := db.c.QueryRow(`INSERT INTO Conversations (name,photo,type) VALUES (?) RETURNING conversation_id;`, user_id, name, photo).Scan(&user_id)
 
 // }

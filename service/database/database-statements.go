@@ -51,8 +51,10 @@ const (
 
 	partecipantsTableCreationStatement = `
 	CREATE TABLE "Partecipants" (
-		"user_id"          INTEGER NOT NULL,
-		"conversation_id"  INTEGER NOT NULL,
+		"user_id"          		INTEGER NOT NULL,
+		"conversation_id"  		INTEGER NOT NULL,
+		"conversation_name"		TEXT,
+		"conversation_photo"	BLOB,
 		PRIMARY KEY("user_id", "conversation_id"),
 		FOREIGN KEY("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE,
 		FOREIGN KEY("conversation_id") REFERENCES "Conversations"("conversation_id") ON DELETE CASCADE
