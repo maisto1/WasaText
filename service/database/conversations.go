@@ -9,7 +9,7 @@ import (
 
 // Get preview Conversations
 func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, error) {
-	var previews []models.Preview
+	previews := make([]models.Preview, 0)
 
 	var exists bool
 	err := db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE user_id = ?)", user_id).Scan(&exists)
@@ -22,7 +22,7 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
 
 	rows, err := db.c.Query(`
 		SELECT Conversations.conversation_id as Conversations_id, Conversations.name, Conversations.photo
-		FROM Participants p
+		FROM Partecipants p
 		JOIN Conversations ON Conversations.conversation_id = p.conversation_id
 		WHERE p.user_id = ?
 	`, user_id)
@@ -63,6 +63,7 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
 	return previews, nil
 }
 
+// Get latest message in a specific conversation
 func (db *appdbimpl) GetLatestMessage(conversation_id int64) (models.Message, error) {
 	var message models.Message
 	var user models.User
@@ -113,3 +114,7 @@ func (db *appdbimpl) GetLatestMessage(conversation_id int64) (models.Message, er
 
 	return message, nil
 }
+
+// func (db *appdbimpl) CreateCOnversation(user_id int64) (bool, error) {
+
+// }

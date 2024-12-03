@@ -101,7 +101,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 	// 	('Conversation1_User2', NULL, 'group'),
 	// 	('Conversation2_User2', NULL, 'group');
 
-	// 	INSERT INTO Participants (user_id, conversation_id) VALUES
+	// 	INSERT INTO Partecipants (user_id, conversation_id) VALUES
 	// 	(1, 1), (1, 2),
 	// 	(2, 1), (2, 3),
 	// 	(3, 2), (3, 3),
@@ -129,7 +129,6 @@ func New(db *sql.DB) (AppDatabase, error) {
 	// 	(4, 4, 'Fourth message User4', NULL, 'text', 1691249567, 'sent', 0);
 	// 	`
 
-	// // Esegui la query
 	// _, err := db.Exec(query)
 	// if err != nil {
 	// 	log.Fatalf("Errore durante l'esecuzione della query: %v", err)

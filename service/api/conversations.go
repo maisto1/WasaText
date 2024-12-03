@@ -13,7 +13,7 @@ func (rt *_router) GetPreviewConversations(w http.ResponseWriter, r *http.Reques
 	message := "Preview Conversation: "
 	var previews []models.Preview
 
-	previews, err := rt.db.GetPreviewConversations(100)
+	previews, err := rt.db.GetPreviewConversations(ctx.User_id)
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + "user not found")
 		w.WriteHeader(http.StatusNotFound)

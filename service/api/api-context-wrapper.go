@@ -1,7 +1,9 @@
 package api
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/maisto1/WasaText/service/api/reqcontext"
 
@@ -15,7 +17,7 @@ import (
 type httpRouterHandler func(http.ResponseWriter, *http.Request, httprouter.Params, reqcontext.RequestContext)
 
 // wrap parses the request and adds a reqcontext.RequestContext instance related to the request.
-func (rt *_router) wrap(fn httpRouterHandler) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func (rt *_router) wrap(fn httpRouterHandler, auth bool) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		reqUUID, err := uuid.NewV4()
 		if err != nil {
@@ -33,7 +35,24 @@ func (rt *_router) wrap(fn httpRouterHandler) func(http.ResponseWriter, *http.Re
 			"remote-ip": r.RemoteAddr,
 		})
 
+		if auth {
+			ctx.User_id, err = ExtractId_from_Bearer(r.Header.Get("Authorization"))
+			if err != nil {
+				ctx.Logger.WithError(err).Error("ERROR wrap: ")
+				ctx.User_id = 0
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
+
 		// Call the next handler in chain (usually, the handler function for the path)
 		fn(w, r, ps, ctx)
 	}
+}
+
+func ExtractId_from_Bearer(token string) (int64, error) {
+	if len(token) < len("Bearer ") || token[:len("Bearer ")] != "Bearer " {
+		return 0, errors.New("invalid Bearer token format")
+	}
+	return strconv.ParseInt(token[len("Bearer "):], 10, 64)
 }

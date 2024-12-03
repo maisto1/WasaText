@@ -16,6 +16,9 @@ type RequestContext struct {
 	// ReqUUID is the request unique ID
 	ReqUUID uuid.UUID
 
+	// Id of the user that make the request
+	User_id int64
+
 	// Logger is a custom field logger for the request
 	Logger logrus.FieldLogger
 }

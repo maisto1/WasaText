@@ -94,7 +94,9 @@ paths:
                     latestMessage:
                       allOf:
                         - $ref: '#/components/schemas/Message'    
-                      description: "Content of the last message in the chat."                 
+                      description: "Content of the last message in the chat."
+        '401':
+          description: 'Not Authorized, must be logged in'   
         '404': 
           description: 'User not found.'
     post:
@@ -148,6 +150,8 @@ paths:
                 $ref: "#/components/schemas/Conversation"
         "400": 
           description: "Invalid input data"
+        '401':
+          description: 'Not Authorized, must be logged in' 
         "404": 
           description: "User not found"
   /conversations/{ConversationId}:
@@ -498,8 +502,10 @@ paths:
                   $ref: '#/components/schemas/User'
                 minItems: 0
                 maxItems: 20
+        "401":
+          description: 'Not Authorized, must be logged in' 
         "500":
-          description: Server
+          description: Server error
   /users/profile/username:
     put:
       security:
