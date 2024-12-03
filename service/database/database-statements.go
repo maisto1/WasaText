@@ -50,7 +50,7 @@ const (
 	`
 
 	partecipantsTableCreationStatement = `
-	CREATE TABLE "Participants" (
+	CREATE TABLE "Partecipants" (
 		"user_id"          INTEGER NOT NULL,
 		"conversation_id"  INTEGER NOT NULL,
 		PRIMARY KEY("user_id", "conversation_id"),

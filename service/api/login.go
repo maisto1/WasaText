@@ -46,7 +46,7 @@ func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	err = json.NewEncoder(w).Encode(response) // json.encode writes the JSON encoding of response to w
+	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + "error parsing response")
 		w.WriteHeader(http.StatusInternalServerError)

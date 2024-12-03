@@ -498,6 +498,8 @@ paths:
                   $ref: '#/components/schemas/User'
                 minItems: 0
                 maxItems: 20
+        "500":
+          description: Server
   /users/profile/username:
     put:
       security:
