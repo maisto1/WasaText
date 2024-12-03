@@ -26,7 +26,7 @@ func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	if len(requestBody.Username) < 3 || len(requestBody.Username) > 16 {
+	if len(requestBody.Username) < 3 || len(requestBody.Username) > 17 {
 		ctx.Logger.WithError(err).Error(message + "username doesn't respect pattern")
 		w.WriteHeader(http.StatusBadRequest)
 		return
