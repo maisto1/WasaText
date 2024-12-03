@@ -10,10 +10,10 @@ func (rt *_router) Handler() http.Handler {
 	//Login or Register route
 	rt.router.POST("/session", rt.wrap(rt.Login))
 
-	//Login or Register route
+	//Get conversations preview
 	rt.router.GET("/conversations", rt.wrap(rt.GetPreviewConversations))
 
-	//Login or Register route
+	//Get users infos
 	rt.router.GET("/users", rt.wrap(rt.GetUsers))
 
 	// Special routes

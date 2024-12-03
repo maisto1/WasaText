@@ -45,7 +45,7 @@ type AppDatabase interface {
 	// Get preview conversations
 	GetPreviewConversations(user_id int64) ([]models.Preview, error)
 
-	// Get Latest COnversation Message
+	// Get Latest Conversation Message
 	GetLatestMessage(conversation_id int64) (models.Message, error)
 
 	//Get Users by query
