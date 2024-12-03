@@ -16,7 +16,6 @@ const (
 		"photo"				BLOB,
 		"type"				TEXT,
 		PRIMARY KEY("conversation_id" AUTOINCREMENT)
-		FOREIGN KEY("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE
 	);
 	`
 
