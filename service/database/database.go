@@ -55,7 +55,7 @@ type AppDatabase interface {
 	CheckPrivateConversation(user_id1, user_id2 int64) (bool, error)
 
 	// Return every messages from a specific conversation
-	GetMessages(conversation_id int64) ([]models.Message, error)
+	GetMessages(user_id int64, conversation_id int64) ([]models.Message, error)
 
 	//Get Users by query
 	GetUsers(names string) []models.User

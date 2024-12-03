@@ -13,7 +13,11 @@ func (rt *_router) Handler() http.Handler {
 	//Get conversations preview
 	rt.router.GET("/conversations", rt.wrap(rt.GetPreviewConversations, true))
 
+	// Create a new conversation (group or private)
 	rt.router.POST("/conversations", rt.wrap(rt.CreateConversation, true))
+
+	// Get messages of a specific conversation
+	rt.router.GET("/conversations/:ConversationId", rt.wrap(rt.GetMessages, true))
 
 	//Get users infos
 	rt.router.GET("/users", rt.wrap(rt.GetUsers, true))

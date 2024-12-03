@@ -6,7 +6,7 @@ import (
 	"github.com/maisto1/WasaText/service/models"
 )
 
-func (db *appdbimpl) GetMessages(conversation_id int64) ([]models.Message, error) {
+func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models.Message, error) {
 	messages := make([]models.Message, 0)
 
 	var exists bool
@@ -18,8 +18,17 @@ func (db *appdbimpl) GetMessages(conversation_id int64) ([]models.Message, error
 		return nil, errors.New("conversation not found")
 	}
 
+	var isParticipant bool
+	err = db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Partecipants WHERE user_id = ? AND conversation_id = ?)", user_id, conversation_id).Scan(&isParticipant)
+	if err != nil {
+		return nil, err
+	}
+	if !isParticipant {
+		return nil, errors.New("user is not a participant")
+	}
+
 	rows, err := db.c.Query(`
-		SELECT message_id, timestamp, user_id, type, content, media, status, forwarded
+		SELECT message_id, timestamp, user_id, type, content, media, status, isForwarded
 		FROM Messages
 		WHERE conversation_id = ?
 	`, conversation_id)
