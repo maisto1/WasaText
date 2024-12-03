@@ -99,6 +99,8 @@ paths:
           description: 'Not Authorized, must be logged in'   
         '404': 
           description: 'User not found.'
+        "500": 
+          description: "Internal server error"
     post:
       security:
         - bearerAuth: []    
@@ -149,6 +151,8 @@ paths:
           description: 'Not Authorized, must be logged in' 
         "404": 
           description: "User not found"
+        "500": 
+          description: "Internal server error"
   /conversations/{ConversationId}:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
@@ -170,8 +174,12 @@ paths:
                 maxItems: 100
                 items:
                   $ref: "#/components/schemas/Message"
+        '401':
+          description: 'Not Authorized, must be logged in' 
         "404": 
           description: "User or conversation not found"
+        "500": 
+          description: "Internal server error"
   /conversations/{ConversationId}/messages/:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
