@@ -57,6 +57,12 @@ type AppDatabase interface {
 	// Return every messages from a specific conversation
 	GetMessages(user_id int64, conversation_id int64) ([]models.Message, error)
 
+	// Send a message in a conversation
+	CreateMessage(user_id int64, conversation_id int64, typeMessage string, content string, media []byte) (models.Message, error)
+
+	// Utils function that checks if user is partecipant in a conversation
+	CheckUserConversation(user_id int64, conversation_id int64) (bool, error)
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

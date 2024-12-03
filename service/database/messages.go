@@ -2,29 +2,42 @@ package database
 
 import (
 	"errors"
+	"time"
 
 	"github.com/maisto1/WasaText/service/models"
 )
 
-func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models.Message, error) {
-	messages := make([]models.Message, 0)
-
+func (db *appdbimpl) CheckUserConversation(user_id int64, conversation_id int64) (bool, error) {
 	var exists bool
 	err := db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Conversations WHERE conversation_id = ?)", conversation_id).Scan(&exists)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	if !exists {
-		return nil, errors.New("conversation not found")
+		return false, errors.New("conversation not found")
 	}
 
 	var isParticipant bool
 	err = db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Partecipants WHERE user_id = ? AND conversation_id = ?)", user_id, conversation_id).Scan(&isParticipant)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	if !isParticipant {
-		return nil, errors.New("user is not a participant")
+		return false, errors.New("user is not a participant")
+	}
+
+	return true, nil
+}
+
+func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models.Message, error) {
+	messages := make([]models.Message, 0)
+
+	isValid, err := db.CheckUserConversation(user_id, conversation_id)
+	if err != nil {
+		return messages, err
+	}
+	if !isValid {
+		return messages, errors.New("user is not a participant")
 	}
 
 	rows, err := db.c.Query(`
@@ -86,4 +99,52 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 	}
 
 	return messages, nil
+}
+
+func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMessage string, content string, media []byte) (models.Message, error) {
+	var message_id int64
+	var message models.Message
+	var user models.User
+
+	current_time := time.Now().Unix()
+
+	isValid, err := db.CheckUserConversation(user_id, conversation_id)
+	if err != nil {
+		return message, err
+	}
+	if !isValid {
+		return message, errors.New("user is not a participant")
+	}
+
+	err = db.c.QueryRow(`
+		INSERT INTO Messages (conversation_id,user_id,content,media,type,timestamp,status,isForwarded) 
+		VALUES (?,?,?,?,?,?,?,?) RETURNING message_id;`,
+		conversation_id,
+		user_id,
+		content,
+		media,
+		typeMessage,
+		current_time,
+		"sent",
+		false,
+	).Scan(&message_id)
+	if err != nil {
+		return message, err
+	}
+
+	err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, user_id).Scan(&user.User_id, &user.Username, &user.Photo)
+	if err != nil {
+		return message, err
+	}
+
+	message.Message_id = message_id
+	message.Timestamp = current_time
+	message.Sender = user
+	message.Type = typeMessage
+	message.Content = content
+	message.Media = media
+	message.Status = "sent"
+	message.Forwarded = false
+
+	return message, nil
 }

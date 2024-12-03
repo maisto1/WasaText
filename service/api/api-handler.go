@@ -11,16 +11,19 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.POST("/session", rt.wrap(rt.Login, false))
 
 	//Get conversations preview
-	rt.router.GET("/conversations", rt.wrap(rt.GetPreviewConversations, true))
+	rt.router.GET("/conversations/", rt.wrap(rt.GetPreviewConversations, true))
 
 	// Create a new conversation (group or private)
-	rt.router.POST("/conversations", rt.wrap(rt.CreateConversation, true))
+	rt.router.POST("/conversations/", rt.wrap(rt.CreateConversation, true))
 
 	// Get messages of a specific conversation
 	rt.router.GET("/conversations/:ConversationId", rt.wrap(rt.GetMessages, true))
 
+	// Send a message in a specific conversation
+	rt.router.POST("/conversations/:ConversationId/messages/", rt.wrap(rt.CreateMessage, true))
+
 	//Get users infos
-	rt.router.GET("/users", rt.wrap(rt.GetUsers, true))
+	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)
