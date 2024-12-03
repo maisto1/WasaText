@@ -48,6 +48,12 @@ type AppDatabase interface {
 	// Get Latest Conversation Message
 	GetLatestMessage(conversation_id int64) (models.Message, error)
 
+	// Create a new conversation
+	CreateConversation(user_id int64, group_name string, typeConv string, partecipant string) error
+
+	// CHecks if 2 user already have a private conversation
+	CheckPrivateConversation(user_id1, user_id2 int64) (bool, error)
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

@@ -12,8 +12,8 @@ const (
 	conversationsTableCreationStatement = `
 	CREATE TABLE "Conversations" (
 		"conversation_id"	INTEGER NOT NULL UNIQUE,
-		"name"				TEXT,
-		"photo"				BLOB,
+		"group_name"				TEXT,
+		"group_photo"				BLOB,
 		"type"				TEXT,
 		PRIMARY KEY("conversation_id" AUTOINCREMENT)
 	);
@@ -53,8 +53,6 @@ const (
 	CREATE TABLE "Partecipants" (
 		"user_id"          		INTEGER NOT NULL,
 		"conversation_id"  		INTEGER NOT NULL,
-		"conversation_name"		TEXT,
-		"conversation_photo"	BLOB,
 		PRIMARY KEY("user_id", "conversation_id"),
 		FOREIGN KEY("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE,
 		FOREIGN KEY("conversation_id") REFERENCES "Conversations"("conversation_id") ON DELETE CASCADE

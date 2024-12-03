@@ -13,6 +13,8 @@ func (rt *_router) Handler() http.Handler {
 	//Get conversations preview
 	rt.router.GET("/conversations", rt.wrap(rt.GetPreviewConversations, true))
 
+	rt.router.POST("/conversations", rt.wrap(rt.CreateConversation, true))
+
 	//Get users infos
 	rt.router.GET("/users", rt.wrap(rt.GetUsers, true))
 

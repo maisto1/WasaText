@@ -33,3 +33,46 @@ func (rt *_router) GetPreviewConversations(w http.ResponseWriter, r *http.Reques
 	ctx.Logger.Info(message + "conversation preview sended to client")
 
 }
+
+func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Create Conversation: "
+
+	var requestBody struct {
+		GroupName   string `json:"groupName"`
+		ConvType    string `json:"conversationType"`
+		Partecipant string `json:"partecipant"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&requestBody)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = rt.db.CreateConversation(ctx.User_id, requestBody.GroupName, requestBody.ConvType, requestBody.Partecipant)
+	if err.Error() == "partecipant not found" {
+		rt.baseLogger.WithError(err).Error(message + "partecipant not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err.Error() == "already have a conversation" {
+		rt.baseLogger.WithError(err).Error(message + "user already have a conversation with this partecipant")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	} else if err != nil {
+		rt.baseLogger.WithError(err).Error(message + "error checking if user exists")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	message = message + "conversation created\n"
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	ctx.Logger.Info(message)
+
+}

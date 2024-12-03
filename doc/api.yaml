@@ -115,7 +115,7 @@ paths:
               description: "OBJ for create conversation"
               type: object
               properties:
-                name:
+                groupName:
                   description: |-
                    If it is a group chat, it is the name of the group; 
                    otherwise, it is the name of the user.
@@ -129,18 +129,13 @@ paths:
                   type: string
                   enum: ["private","group"]
                   example: "group"
-                partecipants:
-                  type: array
-                  description: "Conversation partecipants"
-                  minItems: 1
-                  maxItems: 50
-                  items:
-                    description: "Username of the partecipants"
-                    type: string
-                    pattern: '^.*?$'
-                    minLength: 3
-                    maxLength: 16
-                    example: "Luca"
+                partecipant:
+                  description: "Username of the partecipant"
+                  type: string
+                  pattern: '^.*?$'
+                  minLength: 3
+                  maxLength: 16
+                  example: "Luca"
       responses:
         "201": 
           description: "Conversation created successfully"
