@@ -81,6 +81,9 @@ type AppDatabase interface {
 	// Allows to add a user in a group chat
 	AddGroup(user_id int64, username string, conversation_id int64) error
 
+	// Remove User / or left from group
+	RemoveGroup(user_id int64, conversation_id int64, member_id int64) error
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 
