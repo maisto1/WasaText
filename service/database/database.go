@@ -90,6 +90,12 @@ type AppDatabase interface {
 	//Edit group name
 	EditName(conversation_id int64, groupName string) error
 
+	//Edit profile name
+	EditProfileName(user_id int64, username string) error
+
+	//Edit profile photo
+	EditProfilePhoto(user_id int64, photo []byte) error
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

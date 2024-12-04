@@ -545,10 +545,14 @@ paths:
                   maxLength: 16
                   example: "Alessandro"
       responses:
-        '204':
-          description: "Username updated successfully"
-        '404': 
-          description: "User not found"
+        "204":
+          description: "Group name updated successfully"
+        "400":
+          description: "Invalid input data"
+        "404":
+          description: "Conversation not found"
+        "500":
+          description: "Internal server error"
   /users/prfile/photo:
     put:
       security:
@@ -573,10 +577,14 @@ paths:
                   maxLength: 1000000
                   example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
       responses:
-        '204':
-          description: "Profile photo updated successfully"
-        '404': 
-          description: "User not found"
+        "204":
+          description: "Group name updated successfully"
+        "400":
+          description: "Invalid input data"
+        "404":
+          description: "Conversation not found"
+        "500":
+          description: "Internal server error"
 
 
 

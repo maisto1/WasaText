@@ -31,3 +31,63 @@ func (rt *_router) GetUsers(w http.ResponseWriter, r *http.Request, ps httproute
 
 	ctx.Logger.Info(message)
 }
+
+func (rt *_router) EditProfilePhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Edit Profile photo: "
+
+	var requestBody struct {
+		Photo []byte `json:"photo"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&requestBody)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = rt.db.EditProfilePhoto(ctx.User_id, requestBody.Photo)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "user  not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+
+	ctx.Logger.Info(message + "photo updated successfully")
+}
+
+func (rt *_router) EditProfileName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Edit Profile photo: "
+
+	var requestBody struct {
+		Username string `json:"username"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&requestBody)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = rt.db.EditProfileName(ctx.User_id, requestBody.Username)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "user  not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+
+	ctx.Logger.Info(message + "username updated successfully")
+}

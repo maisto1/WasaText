@@ -49,6 +49,12 @@ func (rt *_router) Handler() http.Handler {
 	// Update group photo
 	rt.router.PUT("/conversations/:ConversationId/photo", rt.wrap(rt.EditPhoto, true))
 
+	// Update profile name
+	rt.router.PUT("/users/profile/username", rt.wrap(rt.EditProfileName, true))
+
+	// Update profile photo
+	rt.router.PUT("/users/profile/photo", rt.wrap(rt.EditProfilePhoto, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 
