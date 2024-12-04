@@ -114,7 +114,7 @@ func (rt *_router) DeleteMessage(w http.ResponseWriter, r *http.Request, ps http
 	message_id_str := ps.ByName("MessageId")
 	message_id, err := strconv.ParseInt(message_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + "invalid message_id")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

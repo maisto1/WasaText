@@ -75,6 +75,9 @@ type AppDatabase interface {
 	// Create a comment under a message
 	CreateComment(user_id int64, conversation_id int64, message_id int64, content string) (models.Comment, error)
 
+	// Delete a comment
+	DeleteComment(user_id int64, conversation_id int64, comment_id int64) error
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

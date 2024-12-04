@@ -34,6 +34,9 @@ func (rt *_router) Handler() http.Handler {
 	// Create a message's comment
 	rt.router.POST("/conversations/:ConversationId/messages/:MessageId/comments/", rt.wrap(rt.CreateComment, true))
 
+	// Delete a message from a conversation
+	rt.router.DELETE("/conversations/:ConversationId/messages/:MessageId/comments/:CommentId", rt.wrap(rt.DeleteComment, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 

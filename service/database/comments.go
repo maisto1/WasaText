@@ -126,3 +126,36 @@ func (db *appdbimpl) CreateComment(user_id int64, conversation_id int64, message
 
 	return comment, nil
 }
+
+func (db *appdbimpl) DeleteComment(user_id int64, conversation_id int64, comment_id int64) error {
+	isValid, err := db.CheckUserConversation(user_id, conversation_id)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return errors.New("user is not a partecipant")
+	}
+
+	var exists bool
+	err = db.c.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1
+			FROM Comments
+			WHERE comment_id = ? AND user_id = ?
+		);`,
+		comment_id, user_id).Scan(&exists)
+
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("this comment doesn't belogs from this user")
+	}
+
+	_, err = db.c.Exec("DELETE FROM Comments WHERE user_id = ? AND comment_id = ?;", user_id, comment_id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

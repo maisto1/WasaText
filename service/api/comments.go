@@ -103,3 +103,33 @@ func (rt *_router) CreateComment(w http.ResponseWriter, r *http.Request, ps http
 	ctx.Logger.Info(message + "comment sended to client")
 
 }
+
+func (rt *_router) DeleteComment(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Delete Message: "
+
+	conversation_id_str := ps.ByName("ConversationId")
+	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	comment_id_str := ps.ByName("CommentId")
+	comment_id, err := strconv.ParseInt(comment_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid comment_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = rt.db.DeleteComment(ctx.User_id, conversation_id, comment_id)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "user/conversation/message not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	ctx.Logger.Info(message + "comment deleted successfully")
+}
