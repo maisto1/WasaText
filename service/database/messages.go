@@ -23,7 +23,7 @@ func (db *appdbimpl) CheckUserConversation(user_id int64, conversation_id int64)
 		return false, err
 	}
 	if !isParticipant {
-		return false, errors.New("user is not a participant")
+		return false, errors.New("user is not a partecipant")
 	}
 
 	return true, nil
@@ -37,7 +37,7 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		return messages, err
 	}
 	if !isValid {
-		return messages, errors.New("user is not a participant")
+		return messages, errors.New("user is not a partecipant")
 	}
 
 	rows, err := db.c.Query(`
@@ -113,7 +113,7 @@ func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMes
 		return message, err
 	}
 	if !isValid {
-		return message, errors.New("user is not a participant")
+		return message, errors.New("user is not a partecipant")
 	}
 
 	err = db.c.QueryRow(`
@@ -155,7 +155,7 @@ func (db *appdbimpl) DeleteMessage(user_id int64, conversation_id int64, message
 		return err
 	}
 	if !isValid {
-		return errors.New("user is not a participant")
+		return errors.New("user is not a partecipant")
 	}
 
 	var exists bool
