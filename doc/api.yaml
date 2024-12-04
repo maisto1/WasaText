@@ -246,6 +246,8 @@ paths:
       responses:
         "204": 
           description: "Message deleted successfully"
+        "400": 
+          description: "Bad request"
         "404": 
           description: "Message or conversation not found"
         "500": 
@@ -299,8 +301,12 @@ paths:
                 maxItems: 100
                 items:
                   $ref: "#/components/schemas/Comment"
+        '400':
+          description: "Bad request"
         '404':
           description: "Message not found"
+        '500': 
+          description: "Internal server error"
     post:
       security:
         - bearerAuth: []
@@ -333,6 +339,8 @@ paths:
           description: "Invalid input data"
         "404": 
           description: "Message or Conversation not found"
+        "500": 
+          description: "Internal server error"
   /conversations/{ConversationId}/messages/{MessageId}/comments/{CommentId}:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
