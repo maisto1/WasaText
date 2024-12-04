@@ -72,6 +72,9 @@ type AppDatabase interface {
 	// Get comment from a message
 	GetComments(user_id int64, conversation_id int64, message_id int64) ([]models.Comment, error)
 
+	// Create a comment under a message
+	CreateComment(user_id int64, conversation_id int64, message_id int64, content string) (models.Comment, error)
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

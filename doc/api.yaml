@@ -356,6 +356,8 @@ paths:
       responses:
         "204": 
           description: "Comment deleted successfully"
+        "400":
+          description: "Bad request"
         "404": 
           description: "Comment not found"
   /conversations/{ConversationId}/members/:

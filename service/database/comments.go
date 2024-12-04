@@ -2,6 +2,8 @@ package database
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/maisto1/WasaText/service/models"
 )
@@ -73,4 +75,54 @@ func (db *appdbimpl) GetComments(user_id int64, conversation_id int64, message_i
 	}
 
 	return comments, nil
+}
+
+func (db *appdbimpl) CreateComment(user_id int64, conversation_id int64, message_id int64, content string) (models.Comment, error) {
+	var comment models.Comment
+	var exists bool
+	current_time := time.Now().Unix()
+	var user models.User
+	var comment_id int64
+
+	err := db.c.QueryRow(`SELECT EXISTS(SELECT 1 FROM Messages WHERE message_id = ?)`, message_id).Scan(&exists)
+	if err != nil {
+		return comment, err
+	}
+	if !exists {
+		return comment, errors.New("message not found")
+	}
+
+	isValid, err := db.CheckUserConversation(user_id, conversation_id)
+	if err != nil {
+		return comment, err
+	}
+	if !isValid {
+		return comment, errors.New("user is not a partecipant")
+	}
+
+	err = db.c.QueryRow(`
+		INSERT INTO Comments (message_id,user_id,content,timestamp)
+		VALUES (?,?,?,?)
+		RETURNING comment_id`,
+		message_id,
+		user_id,
+		content,
+		current_time,
+	).Scan(&comment_id)
+	if err != nil {
+		return comment, err
+	}
+
+	err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, user_id).Scan(&user.User_id, &user.Username, &user.Photo)
+	if err != nil {
+		return comment, err
+	}
+	fmt.Print(content)
+	comment.Timestamp = current_time
+	comment.Message_id = message_id
+	comment.Comment_id = comment_id
+	comment.Sender = user
+	comment.Content = content
+
+	return comment, nil
 }

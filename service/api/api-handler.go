@@ -31,6 +31,9 @@ func (rt *_router) Handler() http.Handler {
 	// Get a message's comment
 	rt.router.GET("/conversations/:ConversationId/messages/:MessageId/comments/", rt.wrap(rt.GetComments, true))
 
+	// Create a message's comment
+	rt.router.POST("/conversations/:ConversationId/messages/:MessageId/comments/", rt.wrap(rt.CreateComment, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 
