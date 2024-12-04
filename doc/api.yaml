@@ -444,11 +444,11 @@ paths:
               "204":
                 description: "Group name updated successfully"
               "400":
-                description: "Invalid input data (the new name is too short/long or empty)"
+                description: "Invalid input data"
               "404":
-                description: "Conversation not found (group with the provided ID doesn't exist)"
-              "403":
-                description: "Forbidden (user not authorized to update the group name)"
+                description: "Conversation not found"
+              "500":
+                description: "Internal server error"
   /conversations/{ConversationId}/photo:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
@@ -476,13 +476,13 @@ paths:
                   example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
       responses:
               "204":
-                description: "Group photo updated successfully"
+                description: "Group name updated successfully"
               "400":
                 description: "Invalid input data"
               "404":
-                description: "Conversation not found (group with the provided ID doesn't exist)"
-              "403":
-                description: "Forbidden (user not authorized to update the group name)"
+                description: "Conversation not found"
+              "500":
+                description: "Internal server error"
   /users/:
     get:
       security:
