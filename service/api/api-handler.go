@@ -37,6 +37,9 @@ func (rt *_router) Handler() http.Handler {
 	// Delete a message from a conversation
 	rt.router.DELETE("/conversations/:ConversationId/messages/:MessageId/comments/:CommentId", rt.wrap(rt.DeleteComment, true))
 
+	// Add user to groupchat
+	rt.router.POST("/conversations/:ConversationId/members/", rt.wrap(rt.AddGRoup, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 

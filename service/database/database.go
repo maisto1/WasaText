@@ -78,6 +78,9 @@ type AppDatabase interface {
 	// Delete a comment
 	DeleteComment(user_id int64, conversation_id int64, comment_id int64) error
 
+	// Allows to add a user in a group chat
+	AddGroup(user_id int64, username string, conversation_id int64) error
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

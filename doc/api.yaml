@@ -394,8 +394,8 @@ paths:
           description: "To add a user to the group, you must have already started a conversation with them."
         "404": 
           description: "Conversation or user not found"
-        "409": 
-          description: "User is already a member of the group"
+        "500": 
+          description: "INternal server error"
   /conversations/{ConversationId}/members/{UserId}:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
