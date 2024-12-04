@@ -58,7 +58,7 @@ func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps
 	decoder.DisallowUnknownFields()
 
 	err := decoder.Decode(&requestBody)
-	if err != nil || !(isValidConversation(requestBody.GroupName, requestBody.ConvType, requestBody.Partecipant)) {
+	if err != nil || !(isValidConversation(requestBody.ConvType, requestBody.GroupName, requestBody.Partecipant)) {
 		ctx.Logger.WithError(err).Error(message + "error decoding request body")
 		w.WriteHeader(http.StatusBadRequest)
 		return

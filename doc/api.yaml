@@ -269,8 +269,12 @@ paths:
                   type: integer
                   example: 1
       responses:
-        '204':
-          description: "Message forwarded"
+        '201':
+          description: "Message is forwarded successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
         '404':
           description: "Message not found"
   /conversations/{ConversationId}/messages/{MessageId}/comments:

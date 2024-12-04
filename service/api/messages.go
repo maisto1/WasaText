@@ -80,7 +80,7 @@ func (rt *_router) CreateMessage(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	mess, err := rt.db.CreateMessage(ctx.User_id, conversation_id, requestBody.Type, requestBody.Content, requestBody.Media)
+	mess, err := rt.db.CreateMessage(ctx.User_id, conversation_id, 0, requestBody.Type, requestBody.Content, requestBody.Media, false)
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + "conversation not found")
 		w.WriteHeader(http.StatusNotFound)
@@ -128,4 +128,57 @@ func (rt *_router) DeleteMessage(w http.ResponseWriter, r *http.Request, ps http
 
 	w.WriteHeader(http.StatusNoContent)
 	ctx.Logger.Info(message + "message deleted successfully")
+}
+
+func (rt *_router) ForwardMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Forward Message: "
+
+	conversation_id_str := ps.ByName("ConversationId")
+	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	message_id_str := ps.ByName("MessageId")
+	message_id, err := strconv.ParseInt(message_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var requestBody struct {
+		TargetConversationId int64 `json:"conversationId"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err = decoder.Decode(&requestBody)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	mess, err := rt.db.ForwardMessage(ctx.User_id, conversation_id, requestBody.TargetConversationId, message_id)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "user/conversation/message not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	err = json.NewEncoder(w).Encode(mess)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error parsing response")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.Logger.Info(message + "messages forwarded to another conversation")
 }

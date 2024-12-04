@@ -58,10 +58,13 @@ type AppDatabase interface {
 	GetMessages(user_id int64, conversation_id int64) ([]models.Message, error)
 
 	// Send a message in a conversation
-	CreateMessage(user_id int64, conversation_id int64, typeMessage string, content string, media []byte) (models.Message, error)
+	CreateMessage(user_id int64, conversation_id int64, target_id int64, typeMessage string, content string, media []byte, forwarded bool) (models.Message, error)
 
 	//Delete a message
 	DeleteMessage(user_id int64, conversation_id int64, message_id int64) error
+
+	//Forward a message to another conversation
+	ForwardMessage(user_id int64, conversation_id int64, target_id int64, message_id int64) (models.Message, error)
 
 	// Utils function that checks if user is partecipant in a conversation
 	CheckUserConversation(user_id int64, conversation_id int64) (bool, error)

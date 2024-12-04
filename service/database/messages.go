@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/maisto1/WasaText/service/models"
@@ -18,6 +19,8 @@ func (db *appdbimpl) CheckUserConversation(user_id int64, conversation_id int64)
 	}
 
 	var isParticipant bool
+	fmt.Println(user_id)
+	fmt.Println(conversation_id)
 	err = db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Partecipants WHERE user_id = ? AND conversation_id = ?)", user_id, conversation_id).Scan(&isParticipant)
 	if err != nil {
 		return false, err
@@ -101,7 +104,7 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 	return messages, nil
 }
 
-func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMessage string, content string, media []byte) (models.Message, error) {
+func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, target_id int64, typeMessage string, content string, media []byte, forwarded bool) (models.Message, error) {
 	var message_id int64
 	var message models.Message
 	var user models.User
@@ -116,6 +119,10 @@ func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMes
 		return message, errors.New("user is not a partecipant")
 	}
 
+	if forwarded {
+		conversation_id = target_id
+	}
+
 	err = db.c.QueryRow(`
 		INSERT INTO Messages (conversation_id,user_id,content,media,type,timestamp,status,isForwarded) 
 		VALUES (?,?,?,?,?,?,?,?) RETURNING message_id;`,
@@ -126,7 +133,7 @@ func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMes
 		typeMessage,
 		current_time,
 		"sent",
-		false,
+		forwarded,
 	).Scan(&message_id)
 	if err != nil {
 		return message, err
@@ -144,7 +151,7 @@ func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMes
 	message.Content = content
 	message.Media = media
 	message.Status = "sent"
-	message.Forwarded = false
+	message.Forwarded = forwarded
 
 	return message, nil
 }
@@ -180,4 +187,28 @@ func (db *appdbimpl) DeleteMessage(user_id int64, conversation_id int64, message
 	}
 
 	return nil
+}
+
+func (db *appdbimpl) ForwardMessage(user_id int64, conversation_id int64, target_id int64, message_id int64) (models.Message, error) {
+	var message models.Message
+
+	err := db.c.QueryRow(`
+	SELECT type,content,media 
+	FROM Messages WHERE message_id = ?`,
+		message_id).Scan(
+		&message.Type,
+		&message.Content,
+		&message.Media,
+	)
+	if err != nil {
+		return message, err
+	}
+
+	messageForwarded, err := db.CreateMessage(user_id, conversation_id, target_id, message.Type, message.Content, message.Media, true)
+	if err != nil {
+		return message, err
+	}
+
+	return messageForwarded, nil
+
 }
