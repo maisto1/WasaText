@@ -2,31 +2,27 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/maisto1/WasaText/service/models"
 )
 
 func (db *appdbimpl) CheckUserConversation(user_id int64, conversation_id int64) (bool, error) {
-	var exists bool
-	err := db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Conversations WHERE conversation_id = ?)", conversation_id).Scan(&exists)
+	var isParticipant bool
+
+	err := db.c.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 
+			FROM Partecipants 
+			WHERE user_id = ? AND conversation_id = ?
+		)`, user_id, conversation_id).Scan(&isParticipant)
+
 	if err != nil {
 		return false, err
-	}
-	if !exists {
-		return false, errors.New("conversation not found")
 	}
 
-	var isParticipant bool
-	fmt.Println(user_id)
-	fmt.Println(conversation_id)
-	err = db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Partecipants WHERE user_id = ? AND conversation_id = ?)", user_id, conversation_id).Scan(&isParticipant)
-	if err != nil {
-		return false, err
-	}
 	if !isParticipant {
-		return false, errors.New("user is not a partecipant")
+		return false, errors.New("user is not part of the conversation")
 	}
 
 	return true, nil

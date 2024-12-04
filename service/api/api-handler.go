@@ -28,6 +28,9 @@ func (rt *_router) Handler() http.Handler {
 	// Forward a message to another conversation
 	rt.router.POST("/conversations/:ConversationId/messages/:MessageId", rt.wrap(rt.ForwardMessage, true))
 
+	// Get a message's comment
+	rt.router.GET("/conversations/:ConversationId/messages/:MessageId/comments/", rt.wrap(rt.GetComments, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 

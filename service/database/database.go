@@ -69,6 +69,9 @@ type AppDatabase interface {
 	// Utils function that checks if user is partecipant in a conversation
 	CheckUserConversation(user_id int64, conversation_id int64) (bool, error)
 
+	// Get comment from a message
+	GetComments(user_id int64, conversation_id int64, message_id int64) ([]models.Comment, error)
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 

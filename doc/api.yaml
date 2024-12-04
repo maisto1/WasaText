@@ -698,7 +698,12 @@ components:
       type: object
       properties:
         id:
-          description: "Unique identifier for conversation."
+          description: "Unique identifier for comment."
+          type: integer
+          example: 1
+          readOnly: true
+        message_id:
+          description: "Unique identifier for message."
           type: integer
           example: 1
           readOnly: true
