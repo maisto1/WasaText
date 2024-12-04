@@ -69,3 +69,57 @@ func (db *appdbimpl) RemoveGroup(user_id int64, conversation_id int64, member_id
 
 	return nil
 }
+
+func (db *appdbimpl) EditName(conversation_id int64, groupName string) error {
+	var isGroup bool
+
+	err := db.c.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 
+			FROM Conversations 
+			WHERE conversation_id = ? AND type = 'group'
+		)
+	`, conversation_id).Scan(&isGroup)
+	if err != nil {
+		return err
+	}
+
+	if !isGroup {
+		return errors.New("this isn't a group chat")
+	}
+
+	_, err = db.c.Exec("UPDATE Conversations SET group_name = ? WHERE conversation_id = ?", groupName, conversation_id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (db *appdbimpl) EditPhoto(conversation_id int64, groupPhoto []byte) error {
+	var isGroup bool
+
+	err := db.c.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 
+			FROM Conversations 
+			WHERE conversation_id = ? AND type = 'group'
+		)
+	`, conversation_id).Scan(&isGroup)
+	if err != nil {
+		return err
+	}
+
+	if !isGroup {
+		return errors.New("this isn't a group chat")
+	}
+
+	_, err = db.c.Exec("UPDATE Conversations SET group_photo = ? WHERE conversation_id = ?", groupPhoto, conversation_id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

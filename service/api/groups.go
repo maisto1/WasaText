@@ -55,7 +55,7 @@ func (rt *_router) AddGRoup(w http.ResponseWriter, r *http.Request, ps httproute
 }
 
 func (rt *_router) RemoveGRoup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	message := "Add Group: "
+	message := "Remove Group: "
 
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
@@ -91,4 +91,92 @@ func (rt *_router) RemoveGRoup(w http.ResponseWriter, r *http.Request, ps httpro
 	w.WriteHeader(http.StatusNoContent)
 
 	ctx.Logger.Info(message + "user successfully removed")
+}
+
+func (rt *_router) EditPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Edit Photo Group: "
+
+	conversation_id_str := ps.ByName("ConversationId")
+	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var requestBody struct {
+		GroupPhoto []byte `json:"groupPhoto"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err = decoder.Decode(&requestBody)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = rt.db.EditPhoto(conversation_id, requestBody.GroupPhoto)
+	if err != nil {
+		if err.Error() == "this isn't a group chat" {
+			ctx.Logger.WithError(err).Error(message + "conversation  not valid or no private conversation")
+			w.WriteHeader(http.StatusForbidden)
+			return
+		} else {
+			ctx.Logger.WithError(err).Error(message + "conversation  not found")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+
+	ctx.Logger.Info(message + "photo updated successfully")
+}
+
+func (rt *_router) EditName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Edit Name Group: "
+
+	conversation_id_str := ps.ByName("ConversationId")
+	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var requestBody struct {
+		GroupName string `json:"groupName"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err = decoder.Decode(&requestBody)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = rt.db.EditName(conversation_id, requestBody.GroupName)
+	if err != nil {
+		if err.Error() == "this isn't a group chat" {
+			ctx.Logger.WithError(err).Error(message + "conversation  not valid or no private conversation")
+			w.WriteHeader(http.StatusForbidden)
+			return
+		} else {
+			ctx.Logger.WithError(err).Error(message + "conversation  not found")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+
+	ctx.Logger.Info(message + "name updated successfully")
 }

@@ -43,6 +43,12 @@ func (rt *_router) Handler() http.Handler {
 	// Remove or left groupchat
 	rt.router.DELETE("/conversations/:ConversationId/members/:UserId", rt.wrap(rt.RemoveGRoup, true))
 
+	// Update group name
+	rt.router.PUT("/conversations/:ConversationId/name", rt.wrap(rt.EditName, true))
+
+	// Update group photo
+	rt.router.PUT("/conversations/:ConversationId/photo", rt.wrap(rt.EditPhoto, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 

@@ -84,6 +84,12 @@ type AppDatabase interface {
 	// Remove User / or left from group
 	RemoveGroup(user_id int64, conversation_id int64, member_id int64) error
 
+	// Edit group photo
+	EditPhoto(conversation_id int64, groupPhoto []byte) error
+
+	//Edit group name
+	EditName(conversation_id int64, groupName string) error
+
 	//Get Users by query
 	GetUsers(names string) []models.User
 
