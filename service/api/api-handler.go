@@ -22,6 +22,9 @@ func (rt *_router) Handler() http.Handler {
 	// Send a message in a specific conversation
 	rt.router.POST("/conversations/:ConversationId/messages/", rt.wrap(rt.CreateMessage, true))
 
+	// Delete a message from a conversation
+	rt.router.DELETE("/conversations/:ConversationId/messages/:MessageId", rt.wrap(rt.DeleteMessage, true))
+
 	//Get users infos
 	rt.router.GET("/users/", rt.wrap(rt.GetUsers, true))
 

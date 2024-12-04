@@ -148,3 +148,36 @@ func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, typeMes
 
 	return message, nil
 }
+
+func (db *appdbimpl) DeleteMessage(user_id int64, conversation_id int64, message_id int64) error {
+	isValid, err := db.CheckUserConversation(user_id, conversation_id)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return errors.New("user is not a participant")
+	}
+
+	var exists bool
+	err = db.c.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1
+			FROM Messages
+			WHERE message_id = ? AND user_id = ?
+		);`,
+		message_id, user_id).Scan(&exists)
+
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("this message doesn't belogs from this user")
+	}
+
+	_, err = db.c.Exec("DELETE FROM Messages WHERE user_id = ? AND message_id = ?;", user_id, message_id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

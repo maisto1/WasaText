@@ -248,6 +248,8 @@ paths:
           description: "Message deleted successfully"
         "404": 
           description: "Message or conversation not found"
+        "500": 
+          description: "Internal server error"
     post:
       security:
         - bearerAuth: []

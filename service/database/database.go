@@ -60,6 +60,9 @@ type AppDatabase interface {
 	// Send a message in a conversation
 	CreateMessage(user_id int64, conversation_id int64, typeMessage string, content string, media []byte) (models.Message, error)
 
+	//Delete a message
+	DeleteMessage(user_id int64, conversation_id int64, message_id int64) error
+
 	// Utils function that checks if user is partecipant in a conversation
 	CheckUserConversation(user_id int64, conversation_id int64) (bool, error)
 
