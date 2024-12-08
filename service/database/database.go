@@ -60,10 +60,10 @@ type AppDatabase interface {
 	// Send a message in a conversation
 	CreateMessage(user_id int64, conversation_id int64, target_id int64, typeMessage string, content string, media []byte, forwarded bool) (models.Message, error)
 
-	//Delete a message
+	// Delete a message
 	DeleteMessage(user_id int64, conversation_id int64, message_id int64) error
 
-	//Forward a message to another conversation
+	// Forward a message to another conversation
 	ForwardMessage(user_id int64, conversation_id int64, target_id int64, message_id int64) (models.Message, error)
 
 	// Utils function that checks if user is partecipant in a conversation
@@ -87,16 +87,16 @@ type AppDatabase interface {
 	// Edit group photo
 	EditPhoto(conversation_id int64, groupPhoto []byte) error
 
-	//Edit group name
+	// Edit group name
 	EditName(conversation_id int64, groupName string) error
 
-	//Edit profile name
+	// Edit profile name
 	EditProfileName(user_id int64, username string) error
 
-	//Edit profile photo
+	// Edit profile photo
 	EditProfilePhoto(user_id int64, photo []byte) error
 
-	//Get Users by query
+	// Get Users by query
 	GetUsers(names string) []models.User
 
 	Ping() error
