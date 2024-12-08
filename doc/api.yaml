@@ -279,7 +279,7 @@ paths:
                 $ref: "#/components/schemas/Message"
         '404':
           description: "Message not found"
-  /conversations/{ConversationId}/messages/{MessageId}/comments:
+  /conversations/{ConversationId}/messages/{MessageId}/comments/:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
       - $ref: "#/components/parameters/MessageId"
