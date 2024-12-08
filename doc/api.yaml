@@ -553,7 +553,7 @@ paths:
           description: "Conversation not found"
         "500":
           description: "Internal server error"
-  /users/prfile/photo:
+  /users/profile/photo:
     put:
       security:
         - bearerAuth: []

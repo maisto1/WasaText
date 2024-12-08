@@ -9,7 +9,7 @@ import (
 func (db *appdbimpl) Login(username string) (int64, error) {
 	var user_id int64
 
-	//search user in database
+	// Search user in database
 	err := db.c.QueryRow("SELECT user_id FROM Users WHERE username = ?;", username).Scan(&user_id)
 	if errors.Is(err, sql.ErrNoRows) {
 		err := db.c.QueryRow(`INSERT INTO users (username) VALUES (?) RETURNING user_id;`, username).Scan(&user_id)
