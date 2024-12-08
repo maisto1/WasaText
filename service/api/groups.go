@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/maisto1/WasaText/service/api/reqcontext"
+	"github.com/maisto1/WasaText/service/constants"
 )
 
 func (rt *_router) AddGRoup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
@@ -15,7 +16,7 @@ func (rt *_router) AddGRoup(w http.ResponseWriter, r *http.Request, ps httproute
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -29,7 +30,7 @@ func (rt *_router) AddGRoup(w http.ResponseWriter, r *http.Request, ps httproute
 
 	err = decoder.Decode(&requestBody)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -60,7 +61,7 @@ func (rt *_router) RemoveGRoup(w http.ResponseWriter, r *http.Request, ps httpro
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -99,7 +100,7 @@ func (rt *_router) EditPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -112,7 +113,7 @@ func (rt *_router) EditPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 
 	err = decoder.Decode(&requestBody)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -143,7 +144,7 @@ func (rt *_router) EditName(w http.ResponseWriter, r *http.Request, ps httproute
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -156,7 +157,7 @@ func (rt *_router) EditName(w http.ResponseWriter, r *http.Request, ps httproute
 
 	err = decoder.Decode(&requestBody)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

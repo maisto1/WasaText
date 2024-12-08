@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/maisto1/WasaText/service/api/reqcontext"
+	"github.com/maisto1/WasaText/service/constants"
 	"github.com/maisto1/WasaText/service/models"
 )
 
@@ -17,7 +18,7 @@ func (rt *_router) GetMessages(w http.ResponseWriter, r *http.Request, ps httpro
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -34,7 +35,7 @@ func (rt *_router) GetMessages(w http.ResponseWriter, r *http.Request, ps httpro
 
 	err = json.NewEncoder(w).Encode(messages)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error parsing response")
+		ctx.Logger.WithError(err).Error(message + constants.ErrParsing)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -59,7 +60,7 @@ func (rt *_router) CreateMessage(w http.ResponseWriter, r *http.Request, ps http
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -75,7 +76,7 @@ func (rt *_router) CreateMessage(w http.ResponseWriter, r *http.Request, ps http
 
 	err = decoder.Decode(&requestBody)
 	if err != nil || !(isValidMessage(requestBody.Type, requestBody.Content, requestBody.Media)) {
-		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -92,7 +93,7 @@ func (rt *_router) CreateMessage(w http.ResponseWriter, r *http.Request, ps http
 
 	err = json.NewEncoder(w).Encode(mess)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error parsing response")
+		ctx.Logger.WithError(err).Error(message + constants.ErrParsing)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -106,7 +107,7 @@ func (rt *_router) DeleteMessage(w http.ResponseWriter, r *http.Request, ps http
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -136,7 +137,7 @@ func (rt *_router) ForwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 	conversation_id_str := ps.ByName("ConversationId")
 	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -144,7 +145,7 @@ func (rt *_router) ForwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 	message_id_str := ps.ByName("MessageId")
 	message_id, err := strconv.ParseInt(message_id_str, 10, 64)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "invalid conversation_id")
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -158,7 +159,7 @@ func (rt *_router) ForwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 
 	err = decoder.Decode(&requestBody)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -175,7 +176,7 @@ func (rt *_router) ForwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 
 	err = json.NewEncoder(w).Encode(mess)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error parsing response")
+		ctx.Logger.WithError(err).Error(message + constants.ErrParsing)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

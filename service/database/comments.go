@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/maisto1/WasaText/service/models"
@@ -117,7 +116,7 @@ func (db *appdbimpl) CreateComment(user_id int64, conversation_id int64, message
 	if err != nil {
 		return comment, err
 	}
-	fmt.Print(content)
+
 	comment.Timestamp = current_time
 	comment.Message_id = message_id
 	comment.Comment_id = comment_id

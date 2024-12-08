@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/maisto1/WasaText/service/api/reqcontext"
+	"github.com/maisto1/WasaText/service/constants"
 )
 
 func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
@@ -21,7 +22,7 @@ func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	err := decoder.Decode(&requestBody)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error decoding request body")
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -48,7 +49,7 @@ func (rt *_router) Login(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "error parsing response")
+		ctx.Logger.WithError(err).Error(message + constants.ErrParsing)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
