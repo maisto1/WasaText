@@ -24,6 +24,9 @@ export default {
         this.saveToSessionStorage();
         console.log("Token saved correctly")
         this.showNotification("Login successful!", "success");
+        setTimeout(() => {
+          this.$router.push('/chats');
+        }, 1000);
       }catch(e){
         console.error("Error while logging in:", e);
         console.error("Error message:", e.message);
