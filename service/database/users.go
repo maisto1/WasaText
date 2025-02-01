@@ -8,13 +8,21 @@ import (
 
 func (db *appdbimpl) GetUsers(names string) []models.User {
 	users := make([]models.User, 0)
+	name := strings.TrimSpace(names)
 
-	usernameList := strings.Split(names, ",")
+	rows, err := db.c.Query(`
+        SELECT * FROM Users 
+        WHERE username LIKE ?`,
+		"%"+name+"%",
+	)
+	if err != nil {
+		return users
+	}
+	defer rows.Close()
 
-	for _, name := range usernameList {
+	for rows.Next() {
 		var user models.User
-		name = strings.TrimSpace(name)
-		err := db.c.QueryRow("SELECT * FROM Users WHERE username = ?;", name).Scan(&user.User_id, &user.Username, &user.Photo)
+		err := rows.Scan(&user.User_id, &user.Username, &user.Photo)
 		if err == nil {
 			users = append(users, user)
 		}
