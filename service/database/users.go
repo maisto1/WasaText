@@ -11,7 +11,7 @@ func (db *appdbimpl) GetUsers(names string) []models.User {
 	name := strings.TrimSpace(names)
 
 	rows, err := db.c.Query(`
-        SELECT * FROM Users 
+        SELECT * FROM Users
         WHERE username LIKE ?`,
 		"%"+name+"%",
 	)
@@ -23,9 +23,13 @@ func (db *appdbimpl) GetUsers(names string) []models.User {
 	for rows.Next() {
 		var user models.User
 		err := rows.Scan(&user.User_id, &user.Username, &user.Photo)
-		if err == nil {
-			users = append(users, user)
+		if err != nil {
+			return users
 		}
+		if rows.Err() != nil {
+			return users
+		}
+		users = append(users, user)
 	}
 
 	return users
