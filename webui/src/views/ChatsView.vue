@@ -1,25 +1,33 @@
+// views/ChatsView.vue
 <script>
 import ConversationItem from '../components/ConversationItem.vue'
 import UserSearchResult from '../components/UserSearchResult.vue'
 import SearchBar from '../components/SearchBar.vue'
+import ChatSection from '../components/ChatSection.vue'
 
 export default {
   components: {
     ConversationItem,
     UserSearchResult,
-    SearchBar
+    SearchBar,
+    ChatSection
   },
   
   data() {
     return {
       conversations: [],
-      loading: true,
+      loading: false,
       error: null,
       selectedConversation: null,
       searchQuery: "",
       searchResults: [],
       isSearching: false,
-      searchLoading: false
+      searchLoading: false,
+      showCreateGroup: false,
+      newGroupData: {
+        name: '',
+        participants: []
+      }
     }
   },
 
@@ -29,6 +37,7 @@ export default {
 
   methods: {
     async fetchConversations() {
+      this.loading = true;
       try {
         const response = await this.$axios.get('/conversations/');
         this.conversations = response.data;
@@ -59,8 +68,46 @@ export default {
       }
     },
 
+    async startPrivateChat(user) {
+      try {
+        await this.$axios.post('/conversations/', {
+          conversationType: 'private',
+          partecipant: user.username
+        });
+        await this.fetchConversations();
+        this.isSearching = false;
+        this.searchQuery = '';
+      } catch (error) {
+        console.error('Error starting private chat:', error);
+      }
+    },
+
+    async createGroup() {
+      if (!this.newGroupData.name || this.newGroupData.participants.length === 0) return;
+      
+      try {
+        await this.$axios.post('/conversations/', {
+          groupName: this.newGroupData.name,
+          conversationType: 'group',
+          participants: this.newGroupData.participants
+        });
+        this.showCreateGroup = false;
+        this.newGroupData = { name: '', participants: [] };
+        await this.fetchConversations();
+      } catch (error) {
+        console.error('Error creating group:', error);
+      }
+    },
+
     selectConversation(conversation) {
       this.selectedConversation = conversation;
+      this.isSearching = false;
+    },
+
+    startNewChat() {
+      this.selectedConversation = null;
+      this.isSearching = true;
+      this.searchQuery = '';
     }
   }
 }
@@ -68,23 +115,30 @@ export default {
 
 <template>
   <div class="chat-container">
+    <!-- Sidebar -->
     <div class="sidebar">
-      <SearchBar 
-        v-model="searchQuery"
-        @search="searchUsers"
-      />
-
-      <div class="sidebar-header" v-if="!isSearching">
-        <h5 class="text-white mb-0">Chats</h5>
+      <!-- Search and New Chat Section -->
+      <div class="search-header p-2 bg-dark border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="text-white mb-0">Chats</h5>
+          <button @click="startNewChat" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-plus"></i> New Chat
+          </button>
+        </div>
+        <SearchBar 
+          v-model="searchQuery"
+          @search="searchUsers"
+        />
       </div>
 
-      <div v-if="loading && !isSearching" class="text-center p-4">
+      <!-- Search Results or Conversations List -->
+      <div v-if="loading" class="text-center p-4">
         <div class="spinner-border text-light" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
 
-      <div v-if="isSearching" class="search-results">
+      <div v-else-if="isSearching" class="search-results">
         <div v-if="searchLoading" class="text-center p-4">
           <div class="spinner-border text-light spinner-border-sm" role="status">
             <span class="visually-hidden">Searching...</span>
@@ -95,14 +149,15 @@ export default {
             v-for="user in searchResults"
             :key="user.id"
             :user="user"
+            @click="startPrivateChat(user)"
           />
-          <div v-if="searchResults.length === 0" class="text-center text-light p-4">
+          <div v-if="searchResults.length === 0 && searchQuery" class="text-center text-light p-4">
             <p>No users found</p>
           </div>
         </div>
       </div>
 
-      <div v-else-if="!loading && !error" class="conversations-list">
+      <div v-else class="conversations-list">
         <ConversationItem
           v-for="conv in conversations"
           :key="conv.id"
@@ -110,15 +165,50 @@ export default {
           :isActive="selectedConversation?.id === conv.id"
           @click="selectConversation(conv)"
         />
+        <div v-if="conversations.length === 0" class="text-center text-light p-4">
+          <p>No conversations yet</p>
+          <button @click="startNewChat" class="btn btn-outline-light">
+            Start a new chat
+          </button>
+        </div>
       </div>
     </div>
 
+    <!-- Main Chat Area -->
     <div class="main-chat">
       <div v-if="!selectedConversation" class="empty-chat-container">
-        <p class="text-secondary">Select a conversation to start chatting</p>
+        <div class="text-center">
+          <i class="fas fa-comments fa-3x text-secondary mb-3"></i>
+          <p class="text-secondary">Select a conversation to start chatting</p>
+        </div>
       </div>
-      <div v-else class="chat-content">
-        <!-- Chat messages view implementation -->
+      <ChatSection 
+        v-else 
+        :conversation="selectedConversation"
+        @refresh-conversations="fetchConversations"
+      />
+    </div>
+
+    <!-- Create Group Modal -->
+    <div v-if="showCreateGroup" class="modal fade show" style="display: block;">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+          <div class="modal-header">
+            <h5 class="modal-title">Create New Group</h5>
+            <button @click="showCreateGroup = false" class="btn-close btn-close-white"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Group Name</label>
+              <input v-model="newGroupData.name" type="text" class="form-control bg-secondary text-white">
+            </div>
+            <!-- Add participant selection here -->
+          </div>
+          <div class="modal-footer">
+            <button @click="showCreateGroup = false" class="btn btn-secondary">Cancel</button>
+            <button @click="createGroup" class="btn btn-primary">Create Group</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -143,7 +233,7 @@ export default {
   border-right: 1px solid #36434a;
 }
 
-.sidebar-header {
+.search-header {
   padding: 16px;
   background-color: #202c33;
   border-bottom: 1px solid #36434a;
@@ -158,24 +248,48 @@ export default {
   flex: 1;
   background-color: #111b21;
   display: flex;
+  flex-direction: column;
+}
+
+.empty-chat-container {
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.empty-chat-container {
-  text-align: center;
-}
-
-.empty-chat-container p {
-  margin: 0;
-  color: #8696a0;
-}
-
 .conversations-list::-webkit-scrollbar {
-  width: 0px;
+  width: 6px;
 }
 
-.conversations-list {
-  scrollbar-width: none;
+.conversations-list::-webkit-scrollbar-track {
+  background: #202c33;
+}
+
+.conversations-list::-webkit-scrollbar-thumb {
+  background-color: #374045;
+  border-radius: 6px;
+}
+
+.modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.user-list {
+  padding: 8px;
+}
+
+.btn-outline-light {
+  border-color: #36434a;
+}
+
+.btn-outline-light:hover {
+  background-color: #36434a;
+  border-color: #36434a;
 }
 </style>
