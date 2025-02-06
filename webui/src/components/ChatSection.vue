@@ -1,6 +1,4 @@
-// components/ChatSection.vue
 <script>
-import { ref, onMounted } from 'vue';
 import MessageBubble from './MessageBubble.vue';
 import ChatInput from './ChatInput.vue';
 
@@ -121,7 +119,6 @@ export default {
 
 <template>
   <div class="chat-section d-flex flex-column h-100">
-    <!-- Chat Header -->
     <div class="chat-header p-3 d-flex align-items-center border-bottom">
       <div class="d-flex align-items-center">
         <div class="profile-photo rounded-circle bg-secondary" style="width: 40px; height: 40px;">
@@ -138,7 +135,6 @@ export default {
       </div>
     </div>
 
-    <!-- Messages Container -->
     <div ref="messagesContainer" class="messages-container flex-grow-1 p-3 overflow-auto">
       <div v-if="loading" class="d-flex justify-content-center align-items-center h-100">
         <div class="spinner-border text-light" role="status">
@@ -158,10 +154,8 @@ export default {
       </template>
     </div>
 
-    <!-- Message Input -->
     <ChatInput @send="sendMessage" />
 
-    <!-- Toast Notifications -->
     <transition name="toast">
       <div v-if="showToast" class="toast-container position-fixed p-3">
         <div class="custom-toast" :class="toastType">
@@ -177,7 +171,7 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style>
 .chat-section {
   background-color: #111b21;
 }
@@ -203,7 +197,6 @@ export default {
   border-radius: 6px;
 }
 
-/* Toast Animations */
 .toast-enter-active {
   animation: slideIn 0.3s ease-out;
 }

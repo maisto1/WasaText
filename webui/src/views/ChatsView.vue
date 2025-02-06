@@ -114,16 +114,11 @@ export default {
 </script>
 
 <template>
-  <div class="chat-container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <!-- Search and New Chat Section -->
+  <div class="chats-view">
+    <div class="sidebar-container">
       <div class="search-header p-2 bg-dark border-bottom">
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2">
           <h5 class="text-white mb-0">Chats</h5>
-          <button @click="startNewChat" class="btn btn-outline-light btn-sm">
-            <i class="fas fa-plus"></i> New Chat
-          </button>
         </div>
         <SearchBar 
           v-model="searchQuery"
@@ -131,51 +126,52 @@ export default {
         />
       </div>
 
-      <!-- Search Results or Conversations List -->
-      <div v-if="loading" class="text-center p-4">
-        <div class="spinner-border text-light" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>
-
-      <div v-else-if="isSearching" class="search-results">
-        <div v-if="searchLoading" class="text-center p-4">
-          <div class="spinner-border text-light spinner-border-sm" role="status">
-            <span class="visually-hidden">Searching...</span>
+      <div class="sidebar-content">
+        <div v-if="loading" class="text-center p-4">
+          <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
         </div>
-        <div v-else class="user-list">
-          <UserSearchResult 
-            v-for="user in searchResults"
-            :key="user.id"
-            :user="user"
-            @click="startPrivateChat(user)"
+
+        <div v-else-if="isSearching" class="search-results">
+          <div v-if="searchLoading" class="text-center p-4">
+            <div class="spinner-border text-light spinner-border-sm" role="status">
+              <span class="visually-hidden">Searching...</span>
+            </div>
+          </div>
+          <div v-else class="user-list">
+            <UserSearchResult 
+              v-for="user in searchResults"
+              :key="user.id"
+              :user="user"
+              @click="startPrivateChat(user)"
+            />
+            <div v-if="searchResults.length === 0 && searchQuery" class="text-center text-light p-4">
+              <p>No users found</p>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="conversations-list">
+          <ConversationItem
+            v-for="conv in conversations"
+            :key="conv.id"
+            :conversation="conv"
+            :isActive="selectedConversation?.id === conv.id"
+            @click="selectConversation(conv)"
           />
-          <div v-if="searchResults.length === 0 && searchQuery" class="text-center text-light p-4">
-            <p>No users found</p>
+          <div v-if="conversations.length === 0" class="text-center text-light p-4">
+            <p>No conversations yet</p>
+            <button @click="startNewChat" class="btn btn-outline-light">
+              Start a new chat
+            </button>
           </div>
-        </div>
-      </div>
-
-      <div v-else class="conversations-list">
-        <ConversationItem
-          v-for="conv in conversations"
-          :key="conv.id"
-          :conversation="conv"
-          :isActive="selectedConversation?.id === conv.id"
-          @click="selectConversation(conv)"
-        />
-        <div v-if="conversations.length === 0" class="text-center text-light p-4">
-          <p>No conversations yet</p>
-          <button @click="startNewChat" class="btn btn-outline-light">
-            Start a new chat
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- Main Chat Area -->
-    <div class="main-chat">
+
+    <div class="main-chat-container">
       <div v-if="!selectedConversation" class="empty-chat-container">
         <div class="text-center">
           <i class="fas fa-comments fa-3x text-secondary mb-3"></i>
@@ -189,8 +185,8 @@ export default {
       />
     </div>
 
-    <!-- Create Group Modal -->
-    <div v-if="showCreateGroup" class="modal fade show" style="display: block;">
+
+    <div v-if="showCreateGroup" class="modal-overlay">
       <div class="modal-dialog">
         <div class="modal-content bg-dark text-white">
           <div class="modal-header">
@@ -202,7 +198,6 @@ export default {
               <label class="form-label">Group Name</label>
               <input v-model="newGroupData.name" type="text" class="form-control bg-secondary text-white">
             </div>
-            <!-- Add participant selection here -->
           </div>
           <div class="modal-footer">
             <button @click="showCreateGroup = false" class="btn btn-secondary">Cancel</button>
@@ -214,23 +209,27 @@ export default {
   </div>
 </template>
 
-<style scoped>
-.chat-container {
+<style>
+.chats-view {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  height: calc(100vh - 48px);
   background-color: #111b21;
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: relative;
 }
 
-.sidebar {
+.sidebar-container {
   width: 400px;
+  min-width: 400px;
   background-color: #202c33;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #36434a;
+  height: 100%;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .search-header {
@@ -239,16 +238,13 @@ export default {
   border-bottom: 1px solid #36434a;
 }
 
-.conversations-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.main-chat {
+.main-chat-container {
   flex: 1;
   background-color: #111b21;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .empty-chat-container {
@@ -258,30 +254,38 @@ export default {
   justify-content: center;
 }
 
-.conversations-list::-webkit-scrollbar {
+.conversations-list, .search-results {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.conversations-list::-webkit-scrollbar,
+.search-results::-webkit-scrollbar {
   width: 6px;
 }
 
-.conversations-list::-webkit-scrollbar-track {
+.conversations-list::-webkit-scrollbar-track,
+.search-results::-webkit-scrollbar-track {
   background: #202c33;
 }
 
-.conversations-list::-webkit-scrollbar-thumb {
+.conversations-list::-webkit-scrollbar-thumb,
+.search-results::-webkit-scrollbar-thumb {
   background-color: #374045;
   border-radius: 6px;
 }
 
-.modal {
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-}
-
-.search-results {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.user-list {
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
 .btn-outline-light {
@@ -291,5 +295,9 @@ export default {
 .btn-outline-light:hover {
   background-color: #36434a;
   border-color: #36434a;
+}
+
+.user-list {
+  padding: 8px;
 }
 </style>

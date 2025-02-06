@@ -45,7 +45,7 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style>
 .chat-input {
   background-color: #202c33;
 }

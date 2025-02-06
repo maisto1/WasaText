@@ -26,7 +26,7 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style>
 .user-item {
   cursor: pointer;
   transition: background-color 0.2s ease;
