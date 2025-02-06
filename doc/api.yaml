@@ -28,9 +28,11 @@ paths:
         content: 
           application/json:
             schema:
+              description: Schemas for Login 
               type: object
               properties:
                 username:
+                  description: Username decided in login phase
                   type: string
                   example: Maria
                   pattern: '^.*?$'
@@ -43,9 +45,11 @@ paths:
           content:
             application/json:
               schema:
+                description: Unique integer that identify user
                 type: object
                 properties:
                   id:
+                    description: id for the user
                     type: integer
                     example: 1
   /conversations/:
@@ -62,6 +66,7 @@ paths:
           content:
             application/json:
               schema:
+                description: Conversations data
                 type: array
                 minItems: 0
                 maxItems: 100
@@ -169,6 +174,7 @@ paths:
           content:
             application/json:
               schema:
+                description: List of conversation messages
                 type: array
                 minItems: 1
                 maxItems: 100
@@ -265,9 +271,11 @@ paths:
         content:
           application/json:
             schema:
+              descripton: Id of the conversation
               type: object
               properties:
                 conversationId:
+                  description: identifier for the conversation
                   type: integer
                   example: 1
       responses:
@@ -296,6 +304,7 @@ paths:
           content:
             application/json:
               schema:
+                description: List of all message's comments
                 type: array
                 minItems: 1
                 maxItems: 100
@@ -319,6 +328,7 @@ paths:
         content:
           application/json:
             schema:
+              description: Content allowed in comment
               type: object
               properties:
                 content:
@@ -376,6 +386,7 @@ paths:
         content:
           application/json:
             schema:
+              description: "Schemas that describe the type of data addToGroup need"
               type: object
               properties:
                 username:
@@ -431,6 +442,7 @@ paths:
         content:
           application/json:
             schema:
+              description: Schemas for change group name
               type: object
               properties:
                 groupName:
@@ -464,6 +476,7 @@ paths:
         content:
           application/json:
             schema:
+              description: Schemas for set group photo
               type: object
               properties:
                 groupPhoto:
@@ -535,6 +548,7 @@ paths:
         content:
           application/json:
             schema:
+              description: Schemas for update username
               type: object
               properties:
                 username:
@@ -566,6 +580,7 @@ paths:
         content:
           application/json:
             schema:
+              description: "Schemas to update profile photo"
               type: object
               properties:
                 photo:
