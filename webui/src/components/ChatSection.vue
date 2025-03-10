@@ -85,25 +85,33 @@ export default {
       }
     },
 
-    async sendMessage(messageContent) {
-      if (!messageContent.trim() || this.sendingMessage) return;
+    async sendMessage(messageData) {
+      if (this.sendingMessage) return;
+      
+
+      if (messageData.type === 'text' && !messageData.content.trim()) return;
       
       this.sendingMessage = true;
       
       try {
-
         if (this.isTempChat) {
-          console.log('Sending first message in temporary chat:', messageContent);
-          this.$emit('send-first-message', messageContent);
-          
-        } 
+          console.log('Sending first message in temporary chat');
 
-        else {
+          const textContent = messageData.content || 'Hello!';
+          this.$emit('send-first-message', textContent);
+        } else {
           console.log('Sending message to existing chat:', this.conversation.id);
-          const response = await this.$axios.post(`/conversations/${this.conversation.id}/messages/`, {
-            type: "text",
-            content: messageContent
-          });
+          
+          const payload = {
+            type: messageData.type,
+            content: messageData.content || ''
+          };
+          
+          if (messageData.type === 'media' && messageData.media) {
+            payload.media = messageData.media;
+          }
+          
+          const response = await this.$axios.post(`/conversations/${this.conversation.id}/messages/`, payload);
           
           this.messages.push(response.data);
           this.scrollToBottom();

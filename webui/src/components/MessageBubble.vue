@@ -17,7 +17,9 @@ export default {
 
   data() {
     return {
-      showActions: false
+      showActions: false,
+      imageLoaded: false,
+      imageError: false
     }
   },
 
@@ -39,6 +41,46 @@ export default {
       if (targetConversationId) {
         this.$emit('forward', this.message.id, parseInt(targetConversationId));
       }
+    },
+
+    handleImageLoad() {
+      this.imageLoaded = true;
+    },
+
+    handleImageError() {
+      this.imageError = true;
+    },
+
+    openMediaInNewTab() {
+      if (this.message.media) {
+        const imgWindow = window.open();
+        imgWindow.document.write(`
+          <html>
+            <head>
+              <title>WasaText Media</title>
+              <style>
+                body { 
+                  margin: 0; 
+                  padding: 0; 
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  height: 100vh; 
+                  background-color: #121212; 
+                }
+                img { 
+                  max-width: 90%; 
+                  max-height: 90vh; 
+                  object-fit: contain; 
+                }
+              </style>
+            </head>
+            <body>
+              <img src="data:image/jpeg;base64,${this.message.media}" alt="Full size media" />
+            </body>
+          </html>
+        `);
+      }
     }
   }
 }
@@ -49,7 +91,7 @@ export default {
     <div 
       :class="['message-bubble p-2 rounded position-relative', 
                isMyMessage ? 'bg-primary text-white' : 'bg-secondary text-white']"
-      style="max-width: 70%;"
+      :style="[message.type === 'media' ? {'max-width': '300px'} : {'max-width': '70%'}]"
       @mouseenter="showActions = true"
       @mouseleave="showActions = false"
     >
@@ -58,16 +100,35 @@ export default {
       </div>
 
       <div class="message-content">
-        <template v-if="message.type === 'text'">
-          <p class="mb-1">{{ message.content }}</p>
-        </template>
-        <template v-else-if="message.type === 'media'">
-          <img 
-            :src="'data:image/jpeg;base64,' + message.media"
-            class="img-fluid rounded mb-1"
-            alt="Media content"
-          />
+        <template v-if="message.type === 'media' && message.media">
+          <div class="media-container mb-2">
+            <div v-if="!imageLoaded && !imageError" class="text-center p-2">
+              <div class="spinner-border spinner-border-sm text-light" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            
+            <div v-if="imageError" class="text-center p-2">
+              <i class="fas fa-exclamation-circle"></i>
+              <small class="d-block">Failed to load image</small>
+            </div>
+            
+            <img 
+              v-show="!imageError"
+              :src="'data:image/jpeg;base64,' + message.media"
+              class="img-fluid rounded cursor-pointer"
+              alt="Media content"
+              @load="handleImageLoad"
+              @error="handleImageError"
+              @click="openMediaInNewTab"
+            />
+          </div>
+          
           <p v-if="message.content" class="mb-1">{{ message.content }}</p>
+        </template>
+        
+        <template v-else-if="message.type === 'text'">
+          <p class="mb-1">{{ message.content }}</p>
         </template>
       </div>
 
@@ -103,11 +164,13 @@ export default {
 .message-bubble {
   border-radius: 12px;
   padding: 8px 12px;
+  word-break: break-word;
 }
 
 .message-actions {
   transform: translateY(-100%);
   opacity: 0.9;
+  z-index: 10;
 }
 
 .message-status {
@@ -118,5 +181,20 @@ export default {
 .btn-group .btn {
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
+}
+
+.media-container {
+  position: relative;
+  min-height: 50px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.media-container img {
+  max-height: 300px;
+  object-fit: contain;
+  width: 100%;
 }
 </style>

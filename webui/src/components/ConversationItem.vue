@@ -18,7 +18,12 @@ export default {
     },
     getMessagePreview(message) {
       if (!message) return '';
-      return message.type === 'text' ? message.content : '🖼️ Photo';
+      if (message.type === 'text') {
+        return message.content;
+      } else if (message.type === 'media') {
+        return 'Photo';
+      }
+      return '';
     }
   }
 }
@@ -42,7 +47,15 @@ export default {
           </small>
         </div>
         <p class="mb-0 text-light-grey small text-truncate" v-if="conversation.latestMessage">
-          {{ getMessagePreview(conversation.latestMessage) }}
+          <template v-if="conversation.latestMessage.type === 'media'">
+            <i class="fas fa-camera me-1"></i> Photo
+            <template v-if="conversation.latestMessage.content">
+              - {{ conversation.latestMessage.content }}
+            </template>
+          </template>
+          <template v-else>
+            {{ getMessagePreview(conversation.latestMessage) }}
+          </template>
         </p>
       </div>
     </div>
