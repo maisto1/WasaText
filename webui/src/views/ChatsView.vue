@@ -30,25 +30,70 @@ export default {
       },
       tempChatUser: null,
       isTempChat: false,
-      creatingConversation: false
+      creatingConversation: false,
+      pollingInterval: null,
+      pollingDelay: 1000
     }
   },
 
   async created() {
     await this.fetchConversations();
+    this.startPolling();
+  },
+  
+  beforeUnmount() {
+    this.stopPolling();
   },
 
   methods: {
     async fetchConversations() {
-      this.loading = true;
+      // Only show loading indicator on initial load, not during polling updates
+      const isInitialLoad = this.conversations.length === 0;
+      if (isInitialLoad) {
+        this.loading = true;
+      }
+      
       try {
         const response = await this.$axios.get('/conversations/');
-        this.conversations = response.data;
+        // Update conversations, preserving selection
+        if (this.selectedConversation) {
+          const currentConvId = this.selectedConversation.id;
+          this.conversations = response.data;
+          if (currentConvId) {
+            const updatedConv = this.conversations.find(c => c.id === currentConvId);
+            if (updatedConv) {
+              this.selectedConversation = updatedConv;
+            }
+          }
+        } else {
+          this.conversations = response.data;
+        }
       } catch (error) {
         console.error('Error fetching conversations:', error);
         this.error = 'Failed to load conversations';
       } finally {
-        this.loading = false;
+        if (isInitialLoad) {
+          this.loading = false;
+        }
+      }
+    },
+    
+    startPolling() {
+      // Clear any existing polling interval
+      this.stopPolling();
+      
+      // Start polling for new conversations
+      this.pollingInterval = setInterval(() => {
+        if (!this.isSearching) {
+          this.fetchConversations();
+        }
+      }, this.pollingDelay);
+    },
+    
+    stopPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
       }
     },
 

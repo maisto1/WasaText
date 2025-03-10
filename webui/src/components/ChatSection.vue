@@ -28,12 +28,20 @@ export default {
       toastMessage: '',
       toastType: 'success',
       sendingMessage: false,
-      isGroupChat: false
+      isGroupChat: false,
+      pollingInterval: null,
+      pollingDelay: 1000,
+      lastMessageId: null
     }
   },
 
   created() {
     this.checkIfGroupChat();
+    this.startPolling();
+  },
+
+  beforeUnmount() {
+    this.stopPolling();
   },
 
   watch: {
@@ -47,6 +55,12 @@ export default {
         } else if (this.isTempChat) {
           this.messages = [];
         }
+      }
+    },
+    'messages': {
+      deep: true,
+      handler() {
+        this.scrollToBottom();
       }
     }
   },
@@ -71,7 +85,11 @@ export default {
     async fetchMessages() {
       if (!this.conversation?.id || this.isTempChat) return;
       
-      this.loading = true;
+      const isInitialLoad = this.messages.length === 0;
+      if (isInitialLoad) {
+        this.loading = true;
+      }
+      
       try {
         console.log('Fetching messages for conversation:', this.conversation.id);
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
@@ -81,14 +99,15 @@ export default {
         console.error('Error fetching messages:', error);
         this.showNotification('Failed to load messages', 'error');
       } finally {
-        this.loading = false;
+        if (isInitialLoad) {
+          this.loading = false;
+        }
       }
     },
 
     async sendMessage(messageData) {
       if (this.sendingMessage) return;
       
-
       if (messageData.type === 'text' && !messageData.content.trim()) return;
       
       this.sendingMessage = true;
@@ -96,7 +115,6 @@ export default {
       try {
         if (this.isTempChat) {
           console.log('Sending first message in temporary chat');
-
           const textContent = messageData.content || 'Hello!';
           this.$emit('send-first-message', textContent);
         } else {
@@ -169,7 +187,56 @@ export default {
     isMyMessage(message) {
       const myUsername = sessionStorage.getItem('username');
       return message.sender.username === myUsername;
-    }
+    },
+    
+    startPolling() {
+
+      this.stopPolling();
+
+      this.pollingInterval = setInterval(() => {
+        if (this.conversation?.id && !this.isTempChat) {
+          this.pollForNewMessages();
+        }
+      }, this.pollingDelay);
+    },
+    
+    stopPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
+    },
+    
+    async pollForNewMessages() {
+      if (!this.conversation?.id || this.isTempChat) return;
+      
+      try {
+
+        const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
+        const newMessages = response.data;
+        
+        if (newMessages.length === 0) return;
+        
+
+        if (this.messages.length === 0 || 
+            newMessages.length > this.messages.length || 
+            newMessages[newMessages.length - 1].id !== this.messages[this.messages.length - 1].id) {
+          
+
+          this.messages = newMessages;
+          
+
+          this.$emit('refresh-conversations');
+
+          const myUsername = sessionStorage.getItem('username');
+          const lastMessage = newMessages[newMessages.length - 1];
+          
+        }
+      } catch (error) {
+        console.error('Error polling for new messages:', error);
+      }
+    },
+  
   }
 }
 </script>
