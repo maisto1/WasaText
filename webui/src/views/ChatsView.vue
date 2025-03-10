@@ -37,7 +37,10 @@ export default {
       currentUser: {
         username: '',
         profilePhoto: null
-      }
+      },
+      showToast: false,
+      toastMessage: '',
+      toastType: 'success'
     }
   },
 
@@ -259,10 +262,31 @@ export default {
       }
 
       const h = hash % 360;
-      const s = 65 + (hash % 20); // 65-85%
-      const l = 45 + (hash % 10); // 45-55%
+      const s = 65 + (hash % 20);
+      const l = 45 + (hash % 10);
       
       return `hsl(${h}, ${s}%, ${l}%)`;
+    },
+
+    logout() {
+      sessionStorage.clear();
+      
+      this.showToast = true;
+      this.toastMessage = "Logout effettuato con successo!";
+      this.toastType = "success";
+      
+      setTimeout(() => {
+        this.$router.push('/login');
+      }, 2000);
+    },
+    
+    showNotification(message, type) {
+      this.toastMessage = message;
+      this.toastType = type;
+      this.showToast = true;
+      setTimeout(() => { 
+        this.showToast = false; 
+      }, 3000);
     }
   }
 }
@@ -274,16 +298,22 @@ export default {
       <div class="search-header p-2 bg-dark border-bottom">
         <div class="d-flex justify-content-between align-items-center px-3 py-2">
           <h5 class="text-white mb-0">Chats</h5>
-          <div class="profile-icon" @click="goToProfile">
-            <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(currentUser.username) }">
-              <img 
-                v-if="currentUser.profilePhoto" 
-                :src="'data:image/jpeg;base64,' + currentUser.profilePhoto"
-                class="avatar-image"
-                alt="Profile"
-              />
-              <div v-else class="avatar-text">
-                {{ getInitials(currentUser.username) }}
+          <div class="d-flex align-items-center">
+            <button @click="logout" class="btn btn-logout me-3">
+              <i class="fas fa-sign-out-alt me-2"></i>
+              Logout
+            </button>
+            <div class="profile-icon" @click="goToProfile">
+              <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(currentUser.username) }">
+                <img 
+                  v-if="currentUser.profilePhoto" 
+                  :src="'data:image/jpeg;base64,' + currentUser.profilePhoto"
+                  class="avatar-image"
+                  alt="Profile"
+                />
+                <div v-else class="avatar-text">
+                  {{ getInitials(currentUser.username) }}
+                </div>
               </div>
             </div>
           </div>
@@ -373,6 +403,19 @@ export default {
         </div>
       </div>
     </div>
+
+    <transition name="toast">
+      <div v-if="showToast" class="toast-container position-fixed p-3">
+        <div class="custom-toast" :class="toastType">
+          <div class="toast-content">
+            <i v-if="toastType === 'success'" class="fas fa-check-circle toast-icon"></i>
+            <i v-else class="fas fa-exclamation-circle toast-icon"></i>
+            <div class="toast-message">{{ toastMessage }}</div>
+          </div>
+          <div class="toast-progress" :class="toastType"></div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -468,7 +511,6 @@ export default {
   padding: 8px;
 }
 
-/* Profile icon styles */
 .profile-icon {
   cursor: pointer;
   position: relative;
@@ -476,5 +518,126 @@ export default {
 
 .profile-icon:hover .avatar-container {
   box-shadow: 0 0 0 2px #00a884;
+}
+
+.btn-logout {
+  background-color: transparent;
+  color: #e9edef;
+  border: 1px solid #e74c3c;
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.btn-logout:hover {
+  background-color: #e74c3c;
+  color: white;
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.7);
+}
+
+.btn-logout:active {
+  transform: scale(0.95);
+}
+
+.toast-container {
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.custom-toast {
+  min-width: 300px;
+  background: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+}
+
+.toast-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.toast-message {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.success {
+  border-left: 4px solid #2ecc71;
+}
+
+.error {
+  border-left: 4px solid #e74c3c;
+}
+
+.success .toast-icon {
+  color: #2ecc71;
+}
+
+.error .toast-icon {
+  color: #e74c3c;
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  animation: progress 3s linear forwards;
+}
+
+.toast-progress.success {
+  background: #2ecc71;
+}
+
+.toast-progress.error {
+  background: #e74c3c;
+}
+
+@keyframes progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.toast-enter-active {
+  animation: slideIn 0.3s ease-out;
+}
+
+.toast-leave-active {
+  animation: slideOut 0.3s ease-in;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 </style>
