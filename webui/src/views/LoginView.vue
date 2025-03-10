@@ -10,6 +10,16 @@ export default {
       toastType: 'success'
     }
   },
+  
+  created() {
+    const authToken = sessionStorage.getItem('authToken')
+    if (authToken) {
+      this.$router.push('/chats')
+    } else {
+      sessionStorage.clear()
+    }
+  },
+  
   methods: {
     async login(){
       this.loading = true

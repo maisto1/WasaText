@@ -33,11 +33,16 @@ export default {
       isTempChat: false,
       creatingConversation: false,
       pollingInterval: null,
-      pollingDelay: 1000
+      pollingDelay: 1000,
+      currentUser: {
+        username: '',
+        profilePhoto: null
+      }
     }
   },
 
   async created() {
+    this.loadCurrentUser();
     await this.fetchConversations();
     this.startPolling();
   },
@@ -45,8 +50,29 @@ export default {
   beforeUnmount() {
     this.stopPolling();
   },
+  
+  beforeRouteEnter(to, from, next) {
+    next(vm => {
+      if (from.path === '/me') {
+        vm.loadCurrentUser();
+      }
+    });
+  },
 
   methods: {
+    loadCurrentUser() {
+      this.currentUser.username = sessionStorage.getItem('username') || '';
+    
+      const profilePhoto = sessionStorage.getItem('profilePhoto');
+      if (profilePhoto) {
+        this.currentUser.profilePhoto = profilePhoto;
+      }
+    },
+    
+    goToProfile() {
+      this.$router.push('/me');
+    },
+    
     async fetchConversations() {
       const isInitialLoad = this.conversations.length === 0;
       if (isInitialLoad) {
@@ -217,6 +243,26 @@ export default {
       this.searchQuery = '';
       this.isTempChat = false;
       this.tempChatUser = null;
+    },
+    
+    getInitials(name) {
+      if (!name) return '';
+      return name.charAt(0).toUpperCase();
+    },
+    
+    getAvatarColor(name) {
+      if (!name) return '#202c33';
+      
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+
+      const h = hash % 360;
+      const s = 65 + (hash % 20); // 65-85%
+      const l = 45 + (hash % 10); // 45-55%
+      
+      return `hsl(${h}, ${s}%, ${l}%)`;
     }
   }
 }
@@ -228,6 +274,19 @@ export default {
       <div class="search-header p-2 bg-dark border-bottom">
         <div class="d-flex justify-content-between align-items-center px-3 py-2">
           <h5 class="text-white mb-0">Chats</h5>
+          <div class="profile-icon" @click="goToProfile">
+            <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(currentUser.username) }">
+              <img 
+                v-if="currentUser.profilePhoto" 
+                :src="'data:image/jpeg;base64,' + currentUser.profilePhoto"
+                class="avatar-image"
+                alt="Profile"
+              />
+              <div v-else class="avatar-text">
+                {{ getInitials(currentUser.username) }}
+              </div>
+            </div>
+          </div>
         </div>
         <SearchBar 
           v-model="searchQuery"
@@ -407,5 +466,15 @@ export default {
 
 .user-list {
   padding: 8px;
+}
+
+/* Profile icon styles */
+.profile-icon {
+  cursor: pointer;
+  position: relative;
+}
+
+.profile-icon:hover .avatar-container {
+  box-shadow: 0 0 0 2px #00a884;
 }
 </style>
