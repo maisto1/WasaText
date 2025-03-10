@@ -47,7 +47,7 @@ export default {
 
   methods: {
     async fetchConversations() {
-      // Only show loading indicator on initial load, not during polling updates
+
       const isInitialLoad = this.conversations.length === 0;
       if (isInitialLoad) {
         this.loading = true;
@@ -55,7 +55,7 @@ export default {
       
       try {
         const response = await this.$axios.get('/conversations/');
-        // Update conversations, preserving selection
+
         if (this.selectedConversation) {
           const currentConvId = this.selectedConversation.id;
           this.conversations = response.data;
@@ -79,10 +79,8 @@ export default {
     },
     
     startPolling() {
-      // Clear any existing polling interval
       this.stopPolling();
-      
-      // Start polling for new conversations
+
       this.pollingInterval = setInterval(() => {
         if (!this.isSearching) {
           this.fetchConversations();
