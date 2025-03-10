@@ -134,51 +134,51 @@ func (db *appdbimpl) GetLatestMessage(conversation_id int64) (models.Message, er
 	return message, nil
 }
 
-// Create a new conevrsation
-func (db *appdbimpl) CreateConversation(user_id int64, group_name string, typeConv string, partecipant string) error {
+// Create a new conversation
+func (db *appdbimpl) CreateConversation(user_id int64, group_name string, typeConv string, partecipant string) (int, error) {
 	var conversation_id int64
 	var user_partecipant []models.User
 
 	if typeConv == "private" {
-
 		user_partecipant = db.GetUsers(partecipant)
 		if len(user_partecipant) == 0 {
-			return errors.New("partecipant not found")
+			return 0, errors.New("partecipant not found")
 		}
 		partecipant_id := user_partecipant[0].User_id
-
 		isVAlid, err := db.CheckPrivateConversation(user_id, partecipant_id)
 		if err != nil {
-			return err
+			return 0, err
 		}
-
 		if isVAlid {
-			return errors.New("already have a conversation")
+			return 0, errors.New("already have a conversation")
 		}
 	}
 
 	err := db.c.QueryRow(`INSERT INTO Conversations (type) VALUES (?) RETURNING conversation_id;`, typeConv).Scan(&conversation_id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	_, err = db.c.Exec(`INSERT INTO Partecipants (user_id,conversation_id) VALUES (?,?);`, user_id, conversation_id)
+	_, err = db.c.Exec(`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`, user_id, conversation_id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if typeConv == "private" {
-		_, err = db.c.Exec(`INSERT INTO Partecipants (user_id,conversation_id) VALUES (?,?);`, user_partecipant[0].User_id, conversation_id)
+
+		_, err = db.c.Exec(`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`, user_partecipant[0].User_id, conversation_id)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	} else {
+
 		_, err = db.c.Exec(`UPDATE Conversations SET group_name = ? WHERE conversation_id = ?;`, group_name, conversation_id)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
-	return nil
+
+	return int(conversation_id), nil
 }
 
 func (db *appdbimpl) CheckPrivateConversation(user_id1, user_id2 int64) (bool, error) {

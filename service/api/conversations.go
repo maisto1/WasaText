@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/maisto1/WasaText/service/api/reqcontext"
@@ -48,7 +49,6 @@ func isValidConversation(conversationType, groupName, partecipant string) bool {
 
 func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	message := "Create Conversation: "
-
 	var requestBody struct {
 		GroupName   string `json:"groupName"`
 		ConvType    string `json:"conversationType"`
@@ -57,7 +57,6 @@ func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-
 	err := decoder.Decode(&requestBody)
 	if err != nil || !(isValidConversation(requestBody.ConvType, requestBody.GroupName, requestBody.Partecipant)) {
 		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
@@ -65,7 +64,7 @@ func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	err = rt.db.CreateConversation(ctx.User_id, requestBody.GroupName, requestBody.ConvType, requestBody.Partecipant)
+	conversationID, err := rt.db.CreateConversation(ctx.User_id, requestBody.GroupName, requestBody.ConvType, requestBody.Partecipant)
 	if err != nil {
 		if err.Error() == "partecipant not found" {
 			rt.baseLogger.WithError(err).Error(message + "partecipant not found")
@@ -82,11 +81,22 @@ func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps
 		}
 	}
 
-	message = message + "conversation created\n"
+	response := struct {
+		ID int `json:"id"`
+	}{
+		ID: conversationID,
+	}
 
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		rt.baseLogger.WithError(err).Error(message + "error marshalling response")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	message = message + "conversation created with ID: " + strconv.Itoa(conversationID) + "\n"
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-
+	w.Write(jsonResponse)
 	ctx.Logger.Info(message)
-
 }

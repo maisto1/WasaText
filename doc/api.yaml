@@ -149,7 +149,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Conversation"
+                description: Unique integer that identify conversation
+                type: object
+                properties:
+                  id:
+                    description: id for the conversation
+                    type: integer
+                    example: 1
         "400": 
           description: "Invalid input data"
         '401':
