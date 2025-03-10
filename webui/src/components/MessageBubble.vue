@@ -1,4 +1,3 @@
-// components/MessageBubble.vue
 <script>
 export default {
   props: {
@@ -9,6 +8,10 @@ export default {
     isMyMessage: {
       type: Boolean,
       required: true
+    },
+    showUsername: {
+      type: Boolean,
+      default: false 
     }
   },
 
@@ -32,7 +35,6 @@ export default {
     },
 
     handleForward() {
-      // In a real app, you'd show a modal for selecting the target conversation
       const targetConversationId = prompt('Enter conversation ID to forward to:');
       if (targetConversationId) {
         this.$emit('forward', this.message.id, parseInt(targetConversationId));
@@ -51,12 +53,10 @@ export default {
       @mouseenter="showActions = true"
       @mouseleave="showActions = false"
     >
-      <!-- Sender name for received messages -->
-      <div v-if="!isMyMessage" class="message-sender mb-1">
+      <div v-if="!isMyMessage && showUsername" class="message-sender mb-1">
         <small class="text-light">{{ message.sender.username }}</small>
       </div>
 
-      <!-- Message content -->
       <div class="message-content">
         <template v-if="message.type === 'text'">
           <p class="mb-1">{{ message.content }}</p>
@@ -71,7 +71,6 @@ export default {
         </template>
       </div>
 
-      <!-- Message meta -->
       <div class="message-meta d-flex justify-content-end align-items-center">
         <small class="text-light me-1">{{ formatTimestamp(message.timestamp) }}</small>
         <span v-if="isMyMessage" class="message-status">
@@ -79,7 +78,6 @@ export default {
         </span>
       </div>
 
-      <!-- Message actions -->
       <div v-if="showActions" class="message-actions position-absolute top-0 end-0 mt-1 me-1">
         <div class="btn-group">
           <button 

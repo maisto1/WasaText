@@ -12,6 +12,10 @@ export default {
     conversation: {
       type: Object,
       required: true
+    },
+    isTempChat: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -22,23 +26,54 @@ export default {
       error: null,
       showToast: false,
       toastMessage: '',
-      toastType: 'success'
+      toastType: 'success',
+      sendingMessage: false,
+      isGroupChat: false
     }
   },
 
+  created() {
+    this.checkIfGroupChat();
+  },
+
   watch: {
-    'conversation.id': {
+    'conversation': {
       immediate: true,
-      handler: 'fetchMessages'
+      deep: true,
+      handler() {
+        this.checkIfGroupChat();
+        if (this.conversation?.id && !this.isTempChat) {
+          this.fetchMessages();
+        } else if (this.isTempChat) {
+          this.messages = [];
+        }
+      }
     }
   },
 
   methods: {
+    checkIfGroupChat() {
+      if (this.conversation) {
+        if (this.conversation.conversationType) {
+          this.isGroupChat = this.conversation.conversationType === 'group';
+        }
+        
+        else if (this.conversation.name) {
+          this.isGroupChat = this.conversation.name.toLowerCase().includes('group');
+        }
+        
+        else if (this.conversation.partecipants && this.conversation.partecipants.length > 2) {
+          this.isGroupChat = true;
+        }
+      }
+    },
+
     async fetchMessages() {
-      if (!this.conversation?.id) return;
+      if (!this.conversation?.id || this.isTempChat) return;
       
       this.loading = true;
       try {
+        console.log('Fetching messages for conversation:', this.conversation.id);
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
         this.messages = response.data;
         this.scrollToBottom();
@@ -51,19 +86,33 @@ export default {
     },
 
     async sendMessage(messageContent) {
-      if (!messageContent.trim()) return;
-
+      if (!messageContent.trim() || this.sendingMessage) return;
+      
+      this.sendingMessage = true;
+      
       try {
-        const response = await this.$axios.post(`/conversations/${this.conversation.id}/messages/`, {
-          type: "text",
-          content: messageContent
-        });
-        
-        this.messages.push(response.data);
-        this.scrollToBottom();
+
+        if (this.isTempChat) {
+          console.log('Sending first message in temporary chat:', messageContent);
+          this.$emit('send-first-message', messageContent);
+          
+        } 
+
+        else {
+          console.log('Sending message to existing chat:', this.conversation.id);
+          const response = await this.$axios.post(`/conversations/${this.conversation.id}/messages/`, {
+            type: "text",
+            content: messageContent
+          });
+          
+          this.messages.push(response.data);
+          this.scrollToBottom();
+        }
       } catch (error) {
         console.error('Error sending message:', error);
         this.showNotification('Failed to send message', 'error');
+      } finally {
+        this.sendingMessage = false;
       }
     },
 
@@ -80,7 +129,7 @@ export default {
 
     async forwardMessage(messageId, targetConversationId) {
       try {
-        const response = await this.$axios.post(
+        await this.$axios.post(
           `/conversations/${this.conversation.id}/messages/${messageId}`,
           { conversationId: targetConversationId }
         );
@@ -131,6 +180,7 @@ export default {
         </div>
         <div class="ms-3">
           <h6 class="mb-0 text-white">{{ conversation.name }}</h6>
+          <small v-if="isTempChat" class="text-light-grey">New chat</small>
         </div>
       </div>
     </div>
@@ -142,19 +192,26 @@ export default {
         </div>
       </div>
 
+      <template v-else-if="isTempChat">
+        <div class="text-center text-light-grey py-5">
+          <p>Type a message to start the conversation</p>
+        </div>
+      </template>
+
       <template v-else>
         <MessageBubble
           v-for="message in messages"
           :key="message.id"
           :message="message"
           :isMyMessage="isMyMessage(message)"
+          :showUsername="isGroupChat"
           @delete="deleteMessage"
           @forward="forwardMessage"
         />
       </template>
     </div>
 
-    <ChatInput @send="sendMessage" />
+    <ChatInput @send="sendMessage" :disabled="sendingMessage" />
 
     <transition name="toast">
       <div v-if="showToast" class="toast-container position-fixed p-3">
@@ -195,6 +252,10 @@ export default {
 .messages-container::-webkit-scrollbar-thumb {
   background-color: #374045;
   border-radius: 6px;
+}
+
+.text-light-grey {
+  color: #8696a0;
 }
 
 .toast-enter-active {

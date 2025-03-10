@@ -27,7 +27,10 @@ export default {
       newGroupData: {
         name: '',
         participants: []
-      }
+      },
+      tempChatUser: null,
+      isTempChat: false,
+      creatingConversation: false
     }
   },
 
@@ -68,17 +71,76 @@ export default {
       }
     },
 
-    async startPrivateChat(user) {
+    selectUserForChat(user) {
+      console.log('Setting up temporary chat with user:', user.username);
+      
+      this.tempChatUser = user;
+      this.isTempChat = true;
+      
+
+      this.selectedConversation = {
+        id: null,
+        name: user.username,
+        conversationType: 'private',
+        conversationPhoto: user.profilePhoto
+      };
+      
+      this.isSearching = false;
+      this.searchQuery = '';
+    },
+
+    async createConversationAndSendMessage(messageContent) {
+      console.log('createConversationAndSendMessage called with message:', messageContent);
+      
+      if (this.creatingConversation) {
+        console.log('Already creating conversation, ignoring duplicate request');
+        return false;
+      }
+      
+      this.creatingConversation = true;
+      
       try {
-        await this.$axios.post('/conversations/', {
+        if (!this.tempChatUser) {
+          console.error('No temporary user selected');
+          this.creatingConversation = false;
+          return false;
+        }
+        
+        console.log('Creating new conversation with user:', this.tempChatUser.username);
+        
+        const conversationResponse = await this.$axios.post('/conversations/', {
           conversationType: 'private',
-          partecipant: user.username
+          partecipant: this.tempChatUser.username,
+          groupName: ''
         });
+        
+        const conversationId = conversationResponse.data.id;
+        console.log('Conversation created with ID:', conversationId);
+        
+        const messageResponse = await this.$axios.post(`/conversations/${conversationId}/messages/`, {
+          type: "text",
+          content: messageContent
+        });
+        console.log('Message sent successfully:', messageResponse.data);
+        
         await this.fetchConversations();
-        this.isSearching = false;
-        this.searchQuery = '';
+        
+        const newConversation = this.conversations.find(c => c.id === conversationId);
+        if (newConversation) {
+          console.log('Selecting new conversation:', newConversation);
+          this.selectedConversation = newConversation;
+          this.isTempChat = false;
+          this.tempChatUser = null;
+        } else {
+          console.error('Could not find newly created conversation in the list');
+        }
+        
+        this.creatingConversation = false;
+        return true;
       } catch (error) {
-        console.error('Error starting private chat:', error);
+        console.error('Error creating conversation and sending message:', error);
+        this.creatingConversation = false;
+        return false;
       }
     },
 
@@ -100,14 +162,19 @@ export default {
     },
 
     selectConversation(conversation) {
+      console.log('Selecting existing conversation:', conversation);
       this.selectedConversation = conversation;
       this.isSearching = false;
+      this.isTempChat = false;
+      this.tempChatUser = null;
     },
 
     startNewChat() {
       this.selectedConversation = null;
       this.isSearching = true;
       this.searchQuery = '';
+      this.isTempChat = false;
+      this.tempChatUser = null;
     }
   }
 }
@@ -144,7 +211,7 @@ export default {
               v-for="user in searchResults"
               :key="user.id"
               :user="user"
-              @click="startPrivateChat(user)"
+              @click="selectUserForChat(user)"
             />
             <div v-if="searchResults.length === 0 && searchQuery" class="text-center text-light p-4">
               <p>No users found</p>
@@ -162,29 +229,27 @@ export default {
           />
           <div v-if="conversations.length === 0" class="text-center text-light p-4">
             <p>No conversations yet</p>
-            <button @click="startNewChat" class="btn btn-outline-light">
-              Start a new chat
-            </button>
+            <p class="text-secondary">Search for a user to start chatting</p>
           </div>
         </div>
       </div>
     </div>
 
-
     <div class="main-chat-container">
       <div v-if="!selectedConversation" class="empty-chat-container">
         <div class="text-center">
           <i class="fas fa-comments fa-3x text-secondary mb-3"></i>
-          <p class="text-secondary">Select a conversation to start chatting</p>
+          <p class="text-secondary">Select a conversation or search for a user to start chatting</p>
         </div>
       </div>
       <ChatSection 
         v-else 
         :conversation="selectedConversation"
+        :is-temp-chat="isTempChat"
         @refresh-conversations="fetchConversations"
+        @send-first-message="createConversationAndSendMessage"
       />
     </div>
-
 
     <div v-if="showCreateGroup" class="modal-overlay">
       <div class="modal-dialog">

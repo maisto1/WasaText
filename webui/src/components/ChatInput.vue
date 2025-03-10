@@ -1,6 +1,13 @@
 // components/ChatInput.vue
 <script>
 export default {
+  props: {
+    disabled: {
+      type: Boolean,
+      default: false
+    }
+  },
+
   data() {
     return {
       message: '',
@@ -10,7 +17,7 @@ export default {
 
   methods: {
     async handleSubmit() {
-      if (!this.message.trim() || this.isSubmitting) return;
+      if (!this.message.trim() || this.isSubmitting || this.disabled) return;
 
       this.isSubmitting = true;
       try {
@@ -32,12 +39,12 @@ export default {
         type="text"
         class="form-control form-control-lg bg-secondary text-white me-2"
         placeholder="Type a message..."
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || disabled"
       />
       <button 
         type="submit" 
         class="btn btn-primary btn-lg"
-        :disabled="!message.trim() || isSubmitting"
+        :disabled="!message.trim() || isSubmitting || disabled"
       >
         <i class="fas" :class="isSubmitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
       </button>
