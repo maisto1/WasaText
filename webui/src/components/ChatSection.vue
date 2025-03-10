@@ -16,6 +16,10 @@ export default {
     isTempChat: {
       type: Boolean,
       default: false
+    },
+    conversations: {
+      type: Array,
+      default: () => []
     }
   },
 
@@ -32,6 +36,13 @@ export default {
       pollingInterval: null,
       pollingDelay: 1000,
       lastMessageId: null
+    }
+  },
+
+  computed: {
+    forwardingConversations() {
+      if (!this.conversations || !this.conversation) return [];
+      return this.conversations.filter(conv => conv.id !== this.conversation.id);
     }
   },
 
@@ -155,11 +166,16 @@ export default {
 
     async forwardMessage(messageId, targetConversationId) {
       try {
+        console.log(`Forwarding message ${messageId} to conversation ${targetConversationId}`);
+        this.showNotification('Forwarding message...', 'success');
+        
         await this.$axios.post(
           `/conversations/${this.conversation.id}/messages/${messageId}`,
           { conversationId: targetConversationId }
         );
+        
         this.showNotification('Message forwarded successfully', 'success');
+        this.$emit('refresh-conversations');
       } catch (error) {
         console.error('Error forwarding message:', error);
         this.showNotification('Failed to forward message', 'error');
@@ -190,7 +206,6 @@ export default {
     },
     
     startPolling() {
-
       this.stopPolling();
 
       this.pollingInterval = setInterval(() => {
@@ -211,32 +226,23 @@ export default {
       if (!this.conversation?.id || this.isTempChat) return;
       
       try {
-
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
         const newMessages = response.data;
         
         if (newMessages.length === 0) return;
         
-
         if (this.messages.length === 0 || 
             newMessages.length > this.messages.length || 
             newMessages[newMessages.length - 1].id !== this.messages[this.messages.length - 1].id) {
           
-
           this.messages = newMessages;
           
-
           this.$emit('refresh-conversations');
-
-          const myUsername = sessionStorage.getItem('username');
-          const lastMessage = newMessages[newMessages.length - 1];
-          
         }
       } catch (error) {
         console.error('Error polling for new messages:', error);
       }
     },
-  
   }
 }
 </script>
@@ -280,6 +286,7 @@ export default {
           :message="message"
           :isMyMessage="isMyMessage(message)"
           :showUsername="isGroupChat"
+          :availableConversations="forwardingConversations"
           @delete="deleteMessage"
           @forward="forwardMessage"
         />

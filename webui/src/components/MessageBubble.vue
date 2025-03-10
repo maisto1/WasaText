@@ -1,5 +1,11 @@
 <script>
+import ForwardModal from './ForwardModal.vue';
+
 export default {
+  components: {
+    ForwardModal
+  },
+  
   props: {
     message: {
       type: Object,
@@ -12,6 +18,10 @@ export default {
     showUsername: {
       type: Boolean,
       default: false 
+    },
+    availableConversations: {
+      type: Array,
+      default: () => []
     }
   },
 
@@ -19,7 +29,8 @@ export default {
     return {
       showActions: false,
       imageLoaded: false,
-      imageError: false
+      imageError: false,
+      showForwardModal: false
     }
   },
 
@@ -36,11 +47,25 @@ export default {
       }
     },
 
-    handleForward() {
-      const targetConversationId = prompt('Enter conversation ID to forward to:');
-      if (targetConversationId) {
-        this.$emit('forward', this.message.id, parseInt(targetConversationId));
+    handleForwardClick() {
+      console.log('Opening forward modal...');
+      if (this.availableConversations.length === 0) {
+        alert('No conversations available to forward to');
+      } else {
+        this.showForwardModal = true;
+        console.log('Forward modal should be open now:', this.showForwardModal);
       }
+    },
+
+    handleForward(messageId, targetConversationId) {
+      console.log('Forwarding message', messageId, 'to conversation', targetConversationId);
+      this.$emit('forward', messageId, targetConversationId);
+      this.showForwardModal = false;
+    },
+
+    closeForwardModal() {
+      console.log('Closing forward modal');
+      this.showForwardModal = false;
     },
 
     handleImageLoad() {
@@ -95,6 +120,11 @@ export default {
       @mouseenter="showActions = true"
       @mouseleave="showActions = false"
     >
+      <!-- Forwarded Label -->
+      <div v-if="message.isForwarded" class="forwarded-label">
+        <i class="fas fa-share"></i> Forwarded
+      </div>
+      
       <div v-if="!isMyMessage && showUsername" class="message-sender mb-1">
         <small class="text-light">{{ message.sender.username }}</small>
       </div>
@@ -143,13 +173,13 @@ export default {
         <div class="btn-group">
           <button 
             v-if="isMyMessage"
-            @click="handleDelete" 
+            @click.stop="handleDelete" 
             class="btn btn-sm btn-danger"
           >
             <i class="fas fa-trash"></i>
           </button>
           <button 
-            @click="handleForward"
+            @click.stop="handleForwardClick"
             class="btn btn-sm btn-info"
           >
             <i class="fas fa-share"></i>
@@ -157,6 +187,16 @@ export default {
         </div>
       </div>
     </div>
+    
+    <!-- Forward Modal -->
+    <ForwardModal
+      v-if="showForwardModal"
+      :show="showForwardModal"
+      :conversations="availableConversations"
+      :message-id="message.id"
+      @close="closeForwardModal"
+      @forward="handleForward"
+    />
   </div>
 </template>
 
@@ -196,5 +236,12 @@ export default {
   max-height: 300px;
   object-fit: contain;
   width: 100%;
+}
+
+.forwarded-label {
+  color: #8696a0;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+  font-style: italic;
 }
 </style>

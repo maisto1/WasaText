@@ -1,16 +1,17 @@
-// views/ChatsView.vue
 <script>
 import ConversationItem from '../components/ConversationItem.vue'
 import UserSearchResult from '../components/UserSearchResult.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ChatSection from '../components/ChatSection.vue'
+import ForwardModal from '../components/ForwardModal.vue'
 
 export default {
   components: {
     ConversationItem,
     UserSearchResult,
     SearchBar,
-    ChatSection
+    ChatSection,
+    ForwardModal
   },
   
   data() {
@@ -47,7 +48,6 @@ export default {
 
   methods: {
     async fetchConversations() {
-
       const isInitialLoad = this.conversations.length === 0;
       if (isInitialLoad) {
         this.loading = true;
@@ -120,7 +120,6 @@ export default {
       this.tempChatUser = user;
       this.isTempChat = true;
       
-
       this.selectedConversation = {
         id: null,
         name: user.username,
@@ -289,6 +288,7 @@ export default {
         v-else 
         :conversation="selectedConversation"
         :is-temp-chat="isTempChat"
+        :conversations="conversations"
         @refresh-conversations="fetchConversations"
         @send-first-message="createConversationAndSendMessage"
       />
