@@ -1,4 +1,3 @@
-// components/ChatInput.vue
 <script>
 export default {
   props: {

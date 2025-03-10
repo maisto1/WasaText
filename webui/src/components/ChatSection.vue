@@ -213,16 +213,14 @@ export default {
     getAvatarColor(name) {
       if (!name) return '#202c33';
       
-      // Generate a consistent color based on the name
       let hash = 0;
       for (let i = 0; i < name.length; i++) {
         hash = name.charCodeAt(i) + ((hash << 5) - hash);
       }
       
-      // Use hue values that work well with dark theme (avoiding too dark colors)
       const h = hash % 360;
-      const s = 65 + (hash % 20); // 65-85%
-      const l = 45 + (hash % 10); // 45-55%
+      const s = 65 + (hash % 20);
+      const l = 45 + (hash % 10);
       
       return `hsl(${h}, ${s}%, ${l}%)`;
     },
