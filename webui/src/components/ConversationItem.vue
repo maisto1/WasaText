@@ -24,6 +24,26 @@ export default {
         return 'Photo';
       }
       return '';
+    },
+    getInitials(name) {
+      if (!name) return '';
+      return name.charAt(0).toUpperCase();
+    },
+    getAvatarColor(name) {
+      if (!name) return '#202c33';
+      
+      // Generate a consistent color based on the name
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      
+      // Use hue values that work well with dark theme (avoiding too dark colors)
+      const h = hash % 360;
+      const s = 65 + (hash % 20); // 65-85%
+      const l = 45 + (hash % 10); // 45-55%
+      
+      return `hsl(${h}, ${s}%, ${l}%)`;
     }
   }
 }
@@ -32,11 +52,14 @@ export default {
 <template>
   <div :class="['conversation-item p-3', {'active': isActive}]">
     <div class="d-flex align-items-center">
-      <div class="rounded-circle bg-secondary flex-shrink-0" style="width: 40px; height: 40px;">
+      <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(conversation.name) }">
         <img v-if="conversation.conversationPhoto" 
              :src="'data:image/jpeg;base64,' + conversation.conversationPhoto"
-             class="rounded-circle w-100 h-100"
+             class="avatar-image"
              alt="Profile photo">
+        <div v-else class="avatar-text">
+          {{ getInitials(conversation.name) }}
+        </div>
       </div>
       
       <div class="ms-3 overflow-hidden">
@@ -79,5 +102,29 @@ export default {
 
 .text-light-grey {
   color: #8696a0;
+}
+
+.avatar-container {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-text {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
 }
 </style>

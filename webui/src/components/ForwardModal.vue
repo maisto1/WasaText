@@ -1,3 +1,4 @@
+// components/ForwardModal.vue
 <script>
 export default {
   props: {
@@ -18,25 +19,86 @@ export default {
   data() {
     return {
       selectedConversationId: null,
-      searchQuery: ''
+      searchQuery: '',
+      itemsPerPage: 15,
+      currentPage: 1,
+      isLoading: false
     }
   },
   
   computed: {
     filteredConversations() {
-      if (!this.searchQuery) return this.conversations;
-      const query = this.searchQuery.toLowerCase();
-      return this.conversations.filter(conv => 
-        conv.name.toLowerCase().includes(query)
-      );
+      if (!this.searchQuery.trim()) {
+        // Quando non c'è una ricerca, mostra tutte le conversazioni ma paginate
+        return this.paginateResults(this.conversations);
+      }
+      
+      // Dividi la query in singole parole
+      const searchTerms = this.searchQuery.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      
+      // Filtra le conversazioni in base ai termini di ricerca
+      const filteredResults = this.conversations.filter(conv => {
+        const nameToSearch = conv.name.toLowerCase();
+        
+        // Un risultato corrisponde se almeno uno dei termini di ricerca è presente nel nome
+        return searchTerms.some(term => nameToSearch.includes(term));
+      });
+      
+      // Pagina i risultati filtrati
+      return this.paginateResults(filteredResults);
+    },
+    
+    totalPages() {
+      if (!this.searchQuery.trim()) {
+        return Math.ceil(this.conversations.length / this.itemsPerPage);
+      } else {
+        const searchTerms = this.searchQuery.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+        const totalFilteredItems = this.conversations.filter(conv => {
+          const nameToSearch = conv.name.toLowerCase();
+          return searchTerms.some(term => nameToSearch.includes(term));
+        }).length;
+        
+        return Math.ceil(totalFilteredItems / this.itemsPerPage);
+      }
+    },
+    
+    showPagination() {
+      return this.totalPages > 1;
+    },
+    
+    currentPageDisplay() {
+      return `${this.currentPage} / ${this.totalPages}`;
     }
   },
   
   methods: {
+    getInitials(name) {
+      if (!name) return '';
+      return name.charAt(0).toUpperCase();
+    },
+    
+    getAvatarColor(name) {
+      if (!name) return '#202c33';
+      
+      // Generate a consistent color based on the name
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      
+      // Use hue values that work well with dark theme (avoiding too dark colors)
+      const h = hash % 360;
+      const s = 65 + (hash % 20); // 65-85%
+      const l = 45 + (hash % 10); // 45-55%
+      
+      return `hsl(${h}, ${s}%, ${l}%)`;
+    },
+    
     closeModal() {
       this.$emit('close');
       this.selectedConversationId = null;
       this.searchQuery = '';
+      this.currentPage = 1;
     },
     
     handleForward() {
@@ -48,6 +110,49 @@ export default {
     
     selectConversation(conversationId) {
       this.selectedConversationId = conversationId;
+    },
+    
+    paginateResults(results) {
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      return results.slice(startIndex, endIndex);
+    },
+    
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.scrollToTop();
+      }
+    },
+    
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        this.scrollToTop();
+      }
+    },
+    
+    scrollToTop() {
+      // Simula un breve caricamento durante il cambio pagina
+      this.isLoading = true;
+      setTimeout(() => {
+        const container = this.$refs.conversationListContainer;
+        if (container) {
+          container.scrollTop = 0;
+        }
+        this.isLoading = false;
+      }, 150);
+    },
+    
+    handleSearchInput() {
+      // Resetta alla prima pagina quando l'utente cerca
+      this.currentPage = 1;
+    }
+  },
+  
+  watch: {
+    searchQuery() {
+      this.handleSearchInput();
     }
   }
 }
@@ -76,11 +181,18 @@ export default {
               class="search-input"
               placeholder="Search conversations..."
             >
+            <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
+              <i class="fas fa-times-circle"></i>
+            </button>
           </div>
         </div>
         
-        <div class="modal-body">
-          <div class="conversation-list">
+        <div class="modal-body" ref="conversationListContainer">
+          <div v-if="isLoading" class="loading-indicator">
+            <div class="spinner"></div>
+          </div>
+          
+          <div v-else class="conversation-list">
             <div 
               v-for="conversation in filteredConversations" 
               :key="conversation.id"
@@ -88,13 +200,13 @@ export default {
               @click="selectConversation(conversation.id)"
             >
               <div class="d-flex align-items-center">
-                <div class="avatar-container">
+                <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(conversation.name) }">
                   <img v-if="conversation.conversationPhoto" 
                        :src="'data:image/jpeg;base64,' + conversation.conversationPhoto"
                        class="avatar-image"
                        alt="Profile photo">
-                  <div v-else class="avatar-placeholder">
-                    {{ conversation.name.charAt(0).toUpperCase() }}
+                  <div v-else class="avatar-text">
+                    {{ getInitials(conversation.name) }}
                   </div>
                 </div>
                 
@@ -110,7 +222,26 @@ export default {
             <div v-if="filteredConversations.length === 0" class="empty-state">
               <i class="fas fa-search fa-2x mb-2"></i>
               <p>No conversations found</p>
+              <small v-if="searchQuery" class="hint">Try different keywords</small>
             </div>
+          </div>
+          
+          <div v-if="showPagination" class="pagination-controls">
+            <button 
+              @click="prevPage" 
+              class="pagination-button"
+              :disabled="currentPage === 1"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="page-indicator">{{ currentPageDisplay }}</span>
+            <button 
+              @click="nextPage" 
+              class="pagination-button"
+              :disabled="currentPage === totalPages"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
         </div>
         
@@ -233,11 +364,12 @@ export default {
   left: 12px;
   color: #8696a0;
   z-index: 1;
+  font-size: 0.9rem;
 }
 
 .search-input {
   width: 100%;
-  padding: 10px 10px 10px 40px;
+  padding: 10px 36px 10px 40px;
   background-color: #2a3942;
   border: none;
   border-radius: 8px;
@@ -254,10 +386,46 @@ export default {
   color: #8696a0;
 }
 
+.clear-search {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #8696a0;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.clear-search:hover {
+  color: #e9edef;
+}
+
 .modal-body {
   padding: 0;
   max-height: 350px;
   overflow-y: auto;
+  position: relative;
+}
+
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(0, 168, 132, 0.3);
+  border-radius: 50%;
+  border-top-color: #00a884;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .conversation-list {
@@ -300,8 +468,8 @@ export default {
   object-fit: cover;
 }
 
-.avatar-placeholder {
-  color: #e9edef;
+.avatar-text {
+  color: white;
   font-size: 1.2rem;
   font-weight: 600;
 }
@@ -330,6 +498,51 @@ export default {
   padding: 24px;
   text-align: center;
   color: #8696a0;
+}
+
+.hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  background-color: #111b21;
+  border-top: 1px solid #2a3942;
+}
+
+.pagination-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  color: #e9edef;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #2a3942;
+}
+
+.pagination-button:disabled {
+  color: #8696a0;
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  margin: 0 12px;
+  color: #8696a0;
+  font-size: 0.9rem;
 }
 
 .modal-footer {
@@ -379,6 +592,7 @@ export default {
   cursor: not-allowed;
 }
 
+/* Scrollbar styling */
 .modal-body::-webkit-scrollbar {
   width: 6px;
 }
