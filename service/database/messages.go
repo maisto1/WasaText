@@ -31,6 +31,7 @@ func (db *appdbimpl) CheckUserConversation(user_id int64, conversation_id int64)
 func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models.Message, error) {
 	messages := make([]models.Message, 0)
 
+	// Check if user is part of the conversation
 	isValid, err := db.CheckUserConversation(user_id, conversation_id)
 	if err != nil {
 		return messages, err
@@ -39,21 +40,24 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		return messages, errors.New("user is not a partecipant")
 	}
 
+	// First, fetch all messages
 	rows, err := db.c.Query(`
-		SELECT message_id, timestamp, user_id, type, content, media, status, isForwarded
-		FROM Messages
-		WHERE conversation_id = ?
-	`, conversation_id)
-
+        SELECT message_id, timestamp, user_id, type, content, media, status, isForwarded
+        FROM Messages
+        WHERE conversation_id = ?
+    `, conversation_id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	// Messages that need status update (where user is not the sender and status is 'sent')
+	var messagesToUpdate []int64
+
 	for rows.Next() {
 		var message_id int64
 		var timestamp int64
-		var user_id int64
+		var sender_id int64
 		var typeMedia string
 		var content string
 		var media []byte
@@ -65,7 +69,7 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		err = rows.Scan(
 			&message_id,
 			&timestamp,
-			&user_id,
+			&sender_id,
 			&typeMedia,
 			&content,
 			&media,
@@ -74,9 +78,6 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		)
 		if err != nil {
 			return messages, err
-		}
-		if rows.Err() != nil {
-			return nil, rows.Err()
 		}
 
 		message.Message_id = message_id
@@ -87,14 +88,51 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		message.Status = status
 		message.Forwarded = forwarded
 
-		err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, user_id).Scan(&sender.User_id, &sender.Username, &sender.Photo)
+		err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, sender_id).Scan(&sender.User_id, &sender.Username, &sender.Photo)
 		if err != nil {
 			return messages, err
 		}
-
 		message.Sender = sender
-
 		messages = append(messages, message)
+
+		if sender_id != user_id && status == "sent" {
+			messagesToUpdate = append(messagesToUpdate, message_id)
+		}
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	if len(messagesToUpdate) > 0 {
+		tx, err := db.c.Begin()
+		if err != nil {
+			return messages, err
+		}
+		stmt, err := tx.Prepare(`UPDATE Messages SET status = 'read' WHERE message_id = ?`)
+		if err != nil {
+			tx.Rollback()
+			return messages, err
+		}
+		defer stmt.Close()
+
+		for _, mid := range messagesToUpdate {
+			_, err := stmt.Exec(mid)
+			if err != nil {
+				tx.Rollback()
+				return messages, err
+			}
+			for i := range messages {
+				if messages[i].Message_id == mid {
+					messages[i].Status = "read"
+				}
+			}
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			return messages, err
+		}
 	}
 
 	return messages, nil

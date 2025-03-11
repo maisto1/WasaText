@@ -105,6 +105,7 @@ export default {
         console.log('Fetching messages for conversation:', this.conversation.id);
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
         this.messages = response.data;
+        this.$emit('refresh-conversations');
         this.scrollToBottom();
       } catch (error) {
         console.error('Error fetching messages:', error);
@@ -251,18 +252,39 @@ export default {
         
         if (newMessages.length === 0) return;
         
-        if (this.messages.length === 0 || 
-            newMessages.length > this.messages.length || 
-            newMessages[newMessages.length - 1].id !== this.messages[this.messages.length - 1].id) {
-          
+        const hasChanges = this.checkForMessageChanges(this.messages, newMessages);
+        
+        if (hasChanges) {
           this.messages = newMessages;
-          
           this.$emit('refresh-conversations');
         }
       } catch (error) {
         console.error('Error polling for new messages:', error);
       }
     },
+
+    checkForMessageChanges(oldMessages, newMessages) {
+      if (oldMessages.length !== newMessages.length) {
+        return true;
+      }
+      
+      if (oldMessages.length > 0 && newMessages.length > 0) {
+        const lastOldMsg = oldMessages[oldMessages.length - 1];
+        const lastNewMsg = newMessages[newMessages.length - 1];
+        
+        if (lastOldMsg.id !== lastNewMsg.id) {
+          return true;
+        }
+        
+        for (let i = 0; i < oldMessages.length; i++) {
+          if (oldMessages[i].status !== newMessages[i].status) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    }
   }
 }
 </script>

@@ -87,13 +87,17 @@ export default {
 
         if (this.selectedConversation) {
           const currentConvId = this.selectedConversation.id;
-          this.conversations = response.data;
+          
+          const newConversations = response.data;
+          
           if (currentConvId) {
-            const updatedConv = this.conversations.find(c => c.id === currentConvId);
+            const updatedConv = newConversations.find(c => c.id === currentConvId);
             if (updatedConv) {
               this.selectedConversation = updatedConv;
             }
           }
+          
+          this.conversations = newConversations;
         } else {
           this.conversations = response.data;
         }

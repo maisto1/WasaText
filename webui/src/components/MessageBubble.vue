@@ -165,7 +165,8 @@ export default {
       <div class="message-meta d-flex justify-content-end align-items-center">
         <small class="text-light me-1">{{ formatTimestamp(message.timestamp) }}</small>
         <span v-if="isMyMessage" class="message-status">
-          <i class="fas" :class="message.status === 'read' ? 'fa-check-double' : 'fa-check'"></i>
+          <i v-if="message.status === 'read'" class="fas fa-check-double" title="Read"></i>
+          <i v-else class="fas fa-check" title="Sent"></i>
         </span>
       </div>
 
@@ -216,6 +217,14 @@ export default {
 .message-status {
   font-size: 0.8em;
   color: rgba(255, 255, 255, 0.8);
+}
+
+.message-status .fa-check {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.message-status .fa-check-double {
+  color: #34B7F1;
 }
 
 .btn-group .btn {

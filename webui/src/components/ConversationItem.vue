@@ -10,6 +10,17 @@ export default {
       default: false
     }
   },
+  
+  computed: {
+    hasUnreadMessages() {
+      if (!this.conversation.latestMessage) return false;
+      
+      const myUsername = sessionStorage.getItem('username');
+      return this.conversation.latestMessage.status === 'sent' && 
+             this.conversation.latestMessage.sender.username !== myUsername;
+    }
+  },
+  
   methods: {
     formatTimestamp(timestamp) {
       if (!timestamp) return '';
@@ -50,7 +61,7 @@ export default {
 <template>
   <div :class="['conversation-item p-3', {'active': isActive}]">
     <div class="d-flex align-items-center">
-      <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(conversation.name) }">
+      <div class="avatar-container position-relative" :style="{ backgroundColor: getAvatarColor(conversation.name) }">
         <img v-if="conversation.conversationPhoto" 
              :src="'data:image/jpeg;base64,' + conversation.conversationPhoto"
              class="avatar-image"
@@ -58,26 +69,34 @@ export default {
         <div v-else class="avatar-text">
           {{ getInitials(conversation.name) }}
         </div>
+        
+        <div v-if="hasUnreadMessages && !isActive" class="unread-indicator"></div>
       </div>
       
-      <div class="ms-3 overflow-hidden">
+      <div class="ms-3 overflow-hidden flex-grow-1">
         <div class="d-flex justify-content-between align-items-center">
           <h6 class="mb-1 text-truncate text-white">{{ conversation.name }}</h6>
           <small class="text-light ms-2" v-if="conversation.latestMessage">
             {{ formatTimestamp(conversation.latestMessage.timestamp) }}
           </small>
         </div>
-        <p class="mb-0 text-light-grey small text-truncate" v-if="conversation.latestMessage">
-          <template v-if="conversation.latestMessage.type === 'media'">
-            <i class="fas fa-camera me-1"></i> Photo
-            <template v-if="conversation.latestMessage.content">
-              - {{ conversation.latestMessage.content }}
+        <div class="d-flex justify-content-between align-items-center">
+          <p class="mb-0 text-light-grey small text-truncate flex-grow-1" v-if="conversation.latestMessage">
+            <template v-if="conversation.latestMessage.type === 'media'">
+              <i class="fas fa-camera me-1"></i> Photo
+              <template v-if="conversation.latestMessage.content">
+                - {{ conversation.latestMessage.content }}
+              </template>
             </template>
-          </template>
-          <template v-else>
-            {{ getMessagePreview(conversation.latestMessage) }}
-          </template>
-        </p>
+            <template v-else>
+              {{ getMessagePreview(conversation.latestMessage) }}
+            </template>
+          </p>
+          
+          <div v-if="hasUnreadMessages && !isActive" class="unread-badge">
+            <span>New</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -124,5 +143,26 @@ export default {
   font-size: 1.2rem;
   font-weight: 600;
   text-align: center;
+}
+
+.unread-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: #00a884;
+  border-radius: 50%;
+  border: 2px solid #202c33;
+}
+
+.unread-badge {
+  background-color: #00a884;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-left: 8px;
 }
 </style>
