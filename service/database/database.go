@@ -66,6 +66,9 @@ type AppDatabase interface {
 	// Forward a message to another conversation
 	ForwardMessage(user_id int64, conversation_id int64, target_id int64, message_id int64) (models.Message, error)
 
+	// Reply to a conversation message
+	ReplyToMessage(user_id int64, conversation_id int64, reply_to_id int64, typeMessage string, content string, media []byte) (models.Message, error)
+
 	// Utils function that checks if user is partecipant in a conversation
 	CheckUserConversation(user_id int64, conversation_id int64) (bool, error)
 

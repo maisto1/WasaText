@@ -31,7 +31,6 @@ func (db *appdbimpl) CheckUserConversation(user_id int64, conversation_id int64)
 func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models.Message, error) {
 	messages := make([]models.Message, 0)
 
-	// Check if user is part of the conversation
 	isValid, err := db.CheckUserConversation(user_id, conversation_id)
 	if err != nil {
 		return messages, err
@@ -40,18 +39,19 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		return messages, errors.New("user is not a partecipant")
 	}
 
-	// First, fetch all messages
 	rows, err := db.c.Query(`
-        SELECT message_id, timestamp, user_id, type, content, media, status, isForwarded
-        FROM Messages
-        WHERE conversation_id = ?
+        SELECT m.message_id, m.timestamp, m.user_id, m.type, m.content, m.media, m.status, m.isForwarded, m.reply_to_id,
+               r.content as reply_content, u_reply.username as reply_sender
+        FROM Messages m
+        LEFT JOIN Messages r ON m.reply_to_id = r.message_id
+        LEFT JOIN Users u_reply ON r.user_id = u_reply.user_id
+        WHERE m.conversation_id = ?
     `, conversation_id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	// Messages that need status update (where user is not the sender and status is 'sent')
 	var messagesToUpdate []int64
 
 	for rows.Next() {
@@ -65,6 +65,9 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		var forwarded bool
 		var message models.Message
 		var sender models.User
+		var reply_to_id *int64
+		var reply_content *string
+		var reply_sender *string
 
 		err = rows.Scan(
 			&message_id,
@@ -75,6 +78,9 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 			&media,
 			&status,
 			&forwarded,
+			&reply_to_id,
+			&reply_content,
+			&reply_sender,
 		)
 		if err != nil {
 			return messages, err
@@ -87,6 +93,14 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		message.Media = media
 		message.Status = status
 		message.Forwarded = forwarded
+
+		if reply_to_id != nil && *reply_to_id > 0 {
+			message.ReplyTo = &models.ReplyInfo{
+				ID:      *reply_to_id,
+				Content: *reply_content,
+				Sender:  *reply_sender,
+			}
+		}
 
 		err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, sender_id).Scan(&sender.User_id, &sender.Username, &sender.Photo)
 		if err != nil {
@@ -190,6 +204,96 @@ func (db *appdbimpl) CreateMessage(user_id int64, conversation_id int64, target_
 	return message, nil
 }
 
+func (db *appdbimpl) ReplyToMessage(user_id int64, conversation_id int64, reply_to_id int64, typeMessage string, content string, media []byte) (models.Message, error) {
+	var message_id int64
+	var message models.Message
+	var user models.User
+	var originalSender models.User
+
+	current_time := time.Now().Unix()
+
+	isValid, err := db.CheckUserConversation(user_id, conversation_id)
+	if err != nil {
+		return message, err
+	}
+	if !isValid {
+		return message, errors.New("user is not a partecipant")
+	}
+
+	var messageExists bool
+	var originalSenderId int64
+	var originalContent string
+
+	err = db.c.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 FROM Messages 
+			WHERE message_id = ? AND conversation_id = ?
+		)`, reply_to_id, conversation_id).Scan(&messageExists)
+
+	if err != nil {
+		return message, err
+	}
+
+	if !messageExists {
+		return message, errors.New("original message not found in this conversation")
+	}
+
+	err = db.c.QueryRow(`
+		SELECT user_id, content FROM Messages WHERE message_id = ?
+	`, reply_to_id).Scan(&originalSenderId, &originalContent)
+
+	if err != nil {
+		return message, err
+	}
+
+	err = db.c.QueryRow(`
+		SELECT username FROM Users WHERE user_id = ?
+	`, originalSenderId).Scan(&originalSender.Username)
+
+	if err != nil {
+		return message, err
+	}
+
+	err = db.c.QueryRow(`
+		INSERT INTO Messages (conversation_id, user_id, content, media, type, timestamp, status, isForwarded, reply_to_id) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING message_id;`,
+		conversation_id,
+		user_id,
+		content,
+		media,
+		typeMessage,
+		current_time,
+		"sent",
+		false,
+		reply_to_id,
+	).Scan(&message_id)
+
+	if err != nil {
+		return message, err
+	}
+
+	err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, user_id).Scan(&user.User_id, &user.Username, &user.Photo)
+	if err != nil {
+		return message, err
+	}
+
+	message.Message_id = message_id
+	message.Timestamp = current_time
+	message.Sender = user
+	message.Type = typeMessage
+	message.Content = content
+	message.Media = media
+	message.Status = "sent"
+	message.Forwarded = false
+	message.ReplyTo = &models.ReplyInfo{
+		ID:      reply_to_id,
+		Content: originalContent,
+		Sender:  originalSender.Username,
+	}
+
+	return message, nil
+}
+
 func (db *appdbimpl) DeleteMessage(user_id int64, conversation_id int64, message_id int64) error {
 	isValid, err := db.CheckUserConversation(user_id, conversation_id)
 	if err != nil {
@@ -244,5 +348,4 @@ func (db *appdbimpl) ForwardMessage(user_id int64, conversation_id int64, target
 	}
 
 	return messageForwarded, nil
-
 }

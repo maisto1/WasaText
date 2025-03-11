@@ -183,3 +183,65 @@ func (rt *_router) ForwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 
 	ctx.Logger.Info(message + "messages forwarded to another conversation")
 }
+
+func (rt *_router) ReplyMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Reply Message: "
+
+	conversation_id_str := ps.ByName("ConversationId")
+	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	message_id_str := ps.ByName("MessageId")
+	message_id, err := strconv.ParseInt(message_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "invalid message_id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var requestBody struct {
+		Type    string `json:"type"`
+		Content string `json:"content"`
+		Media   []byte `json:"media"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err = decoder.Decode(&requestBody)
+	if err != nil || !(isValidMessage(requestBody.Type, requestBody.Content, requestBody.Media)) {
+		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	replyMessage, err := rt.db.ReplyToMessage(
+		ctx.User_id,
+		conversation_id,
+		message_id,
+		requestBody.Type,
+		requestBody.Content,
+		requestBody.Media,
+	)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "failed to create reply message")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	err = json.NewEncoder(w).Encode(replyMessage)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + constants.ErrParsing)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.Logger.Info(message + "reply message sent successfully")
+}
