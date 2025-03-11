@@ -35,7 +35,8 @@ export default {
       isGroupChat: false,
       pollingInterval: null,
       pollingDelay: 1000,
-      lastMessageId: null
+      lastMessageId: null,
+      replyToMessage: null
     }
   },
 
@@ -66,6 +67,9 @@ export default {
         } else if (this.isTempChat) {
           this.messages = [];
         }
+        
+
+        this.replyToMessage = null;
       }
     },
     'messages': {
@@ -132,18 +136,45 @@ export default {
         } else {
           console.log('Sending message to existing chat:', this.conversation.id);
           
-          const payload = {
-            type: messageData.type,
-            content: messageData.content || ''
-          };
-          
-          if (messageData.type === 'media' && messageData.media) {
-            payload.media = messageData.media;
+          // Check if we're replying to a message
+          if (this.replyToMessage && this.replyToMessage.id) {
+            console.log('Sending reply to message:', this.replyToMessage.id);
+            
+            const payload = {
+              type: messageData.type,
+              content: messageData.content || ''
+            };
+            
+            if (messageData.type === 'media' && messageData.media) {
+              payload.media = messageData.media;
+            }
+            
+            const response = await this.$axios.post(
+              `/conversations/${this.conversation.id}/messages/${this.replyToMessage.id}/reply`,
+              payload
+            );
+            
+            this.messages.push(response.data);
+            this.replyToMessage = null;
+          } else {
+            // Regular message
+            const payload = {
+              type: messageData.type,
+              content: messageData.content || ''
+            };
+            
+            if (messageData.type === 'media' && messageData.media) {
+              payload.media = messageData.media;
+            }
+            
+            const response = await this.$axios.post(
+              `/conversations/${this.conversation.id}/messages/`, 
+              payload
+            );
+            
+            this.messages.push(response.data);
           }
           
-          const response = await this.$axios.post(`/conversations/${this.conversation.id}/messages/`, payload);
-          
-          this.messages.push(response.data);
           this.scrollToBottom();
         }
       } catch (error) {
@@ -181,6 +212,42 @@ export default {
         console.error('Error forwarding message:', error);
         this.showNotification('Failed to forward message', 'error');
       }
+    },
+    
+    async handleSendReply(originalMessage, replyData) {
+      console.log('Sending reply to message:', originalMessage.id, 'with data:', replyData);
+      
+      if (this.sendingMessage) return;
+      this.sendingMessage = true;
+      
+      try {
+        const payload = {
+          type: replyData.type,
+          content: replyData.content || ''
+        };
+        
+        if (replyData.type === 'media' && replyData.media) {
+          payload.media = replyData.media;
+        }
+        
+        const response = await this.$axios.post(
+          `/conversations/${this.conversation.id}/messages/${originalMessage.id}/reply`,
+          payload
+        );
+        
+        this.messages.push(response.data);
+        this.scrollToBottom();
+        this.showNotification('Reply sent successfully', 'success');
+      } catch (error) {
+        console.error('Error sending reply:', error);
+        this.showNotification('Failed to send reply', 'error');
+      } finally {
+        this.sendingMessage = false;
+      }
+    },
+    
+    cancelReply() {
+      this.replyToMessage = null;
     },
 
     scrollToBottom() {
@@ -334,11 +401,17 @@ export default {
           :availableConversations="forwardingConversations"
           @delete="deleteMessage"
           @forward="forwardMessage"
+          @send-reply="handleSendReply"
         />
       </template>
     </div>
 
-    <ChatInput @send="sendMessage" :disabled="sendingMessage" />
+    <ChatInput 
+      @send="sendMessage" 
+      @cancel-reply="cancelReply"
+      :disabled="sendingMessage" 
+      :reply-to-message="replyToMessage"
+    />
 
     <transition name="toast">
       <div v-if="showToast" class="toast-container position-fixed p-3">

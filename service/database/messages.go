@@ -95,10 +95,25 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		message.Forwarded = forwarded
 
 		if reply_to_id != nil && *reply_to_id > 0 {
+			var replyContentText string
+			var replySenderName string
+
+			if reply_content != nil {
+				replyContentText = *reply_content
+			} else {
+				replyContentText = "Message deleted"
+			}
+
+			if reply_sender != nil {
+				replySenderName = *reply_sender
+			} else {
+				replySenderName = "User"
+			}
+
 			message.ReplyTo = &models.ReplyInfo{
 				ID:      *reply_to_id,
-				Content: *reply_content,
-				Sender:  *reply_sender,
+				Content: replyContentText,
+				Sender:  replySenderName,
 			}
 		}
 

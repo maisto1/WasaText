@@ -1,9 +1,11 @@
 <script>
 import ForwardModal from './ForwardModal.vue';
+import ReplyModal from './ReplyModal.vue';
 
 export default {
   components: {
-    ForwardModal
+    ForwardModal,
+    ReplyModal
   },
   
   props: {
@@ -30,7 +32,8 @@ export default {
       showActions: false,
       imageLoaded: false,
       imageError: false,
-      showForwardModal: false
+      showForwardModal: false,
+      showReplyModal: false
     }
   },
 
@@ -62,10 +65,26 @@ export default {
       this.$emit('forward', messageId, targetConversationId);
       this.showForwardModal = false;
     },
+    
+    handleReplyClick() {
+      console.log('Opening reply modal...');
+      this.showReplyModal = true;
+    },
+    
+    handleSendReply(originalMessage, replyData) {
+      console.log('Sending reply to message:', originalMessage.id, 'with data:', replyData);
+      this.$emit('send-reply', originalMessage, replyData);
+      this.showReplyModal = false;
+    },
 
     closeForwardModal() {
       console.log('Closing forward modal');
       this.showForwardModal = false;
+    },
+    
+    closeReplyModal() {
+      console.log('Closing reply modal');
+      this.showReplyModal = false;
     },
 
     handleImageLoad() {
@@ -125,6 +144,23 @@ export default {
         <i class="fas fa-share"></i> Forwarded
       </div>
       
+      <!-- Reply Info -->
+      <div v-if="message.replyTo" class="reply-info mb-2">
+        <div class="reply-preview">
+          <div class="reply-sender">
+            {{ message.replyTo.sender }}
+          </div>
+          <div class="reply-content">
+            <template v-if="message.replyTo.content">
+              {{ message.replyTo.content }}
+            </template>
+            <template v-else>
+              <i class="fas fa-camera me-1"></i> Photo
+            </template>
+          </div>
+        </div>
+      </div>
+      
       <div v-if="!isMyMessage && showUsername" class="message-sender mb-1">
         <small class="text-light">{{ message.sender.username }}</small>
       </div>
@@ -170,20 +206,32 @@ export default {
         </span>
       </div>
 
-      <div v-if="showActions" class="message-actions position-absolute top-0 end-0 mt-1 me-1">
-        <div class="btn-group">
+      <!-- Menu delle azioni sotto al messaggio -->
+      <div v-if="showActions" class="message-actions-below">
+        <div class="action-button-container">
+          <button 
+            @click.stop="handleReplyClick" 
+            class="action-button reply-action"
+            title="Reply"
+          >
+            <i class="fas fa-reply"></i>
+          </button>
+          
+          <button 
+            @click.stop="handleForwardClick"
+            class="action-button forward-action"
+            title="Forward"
+          >
+            <i class="fas fa-share"></i>
+          </button>
+          
           <button 
             v-if="isMyMessage"
             @click.stop="handleDelete" 
-            class="btn btn-sm btn-danger"
+            class="action-button delete-action"
+            title="Delete"
           >
             <i class="fas fa-trash"></i>
-          </button>
-          <button 
-            @click.stop="handleForwardClick"
-            class="btn btn-sm btn-info"
-          >
-            <i class="fas fa-share"></i>
           </button>
         </div>
       </div>
@@ -198,6 +246,15 @@ export default {
       @close="closeForwardModal"
       @forward="handleForward"
     />
+    
+    <!-- Reply Modal -->
+    <ReplyModal
+      v-if="showReplyModal"
+      :show="showReplyModal"
+      :message="message"
+      @close="closeReplyModal"
+      @send-reply="handleSendReply"
+    />
   </div>
 </template>
 
@@ -208,10 +265,52 @@ export default {
   word-break: break-word;
 }
 
-.message-actions {
-  transform: translateY(-100%);
-  opacity: 0.9;
+/* Stile per il menu delle azioni sotto al messaggio */
+.message-actions-below {
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
+}
+
+.action-button-container {
+  display: flex;
+  background-color: #202c33;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  padding: 2px;
+}
+
+.action-button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.reply-action {
+  color: #00a884;
+}
+
+.forward-action {
+  color: #34B7F1;
+}
+
+.delete-action {
+  color: #f15c6d;
 }
 
 .message-status {
@@ -225,11 +324,6 @@ export default {
 
 .message-status .fa-check-double {
   color: #34B7F1;
-}
-
-.btn-group .btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
 }
 
 .media-container {
@@ -252,5 +346,32 @@ export default {
   font-size: 0.75rem;
   margin-bottom: 4px;
   font-style: italic;
+}
+
+.reply-info {
+  padding: 8px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.2);
+  position: relative;
+  border-left: 3px solid #34B7F1;
+  margin-top: 4px;
+}
+
+.reply-preview {
+  font-size: 0.85rem;
+  overflow: hidden;
+}
+
+.reply-sender {
+  font-weight: 600;
+  color: #34B7F1;
+  margin-bottom: 2px;
+}
+
+.reply-content {
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
