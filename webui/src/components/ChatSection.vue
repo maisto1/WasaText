@@ -68,7 +68,6 @@ export default {
           this.messages = [];
         }
         
-
         this.replyToMessage = null;
       }
     },
@@ -108,7 +107,13 @@ export default {
       try {
         console.log('Fetching messages for conversation:', this.conversation.id);
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
-        this.messages = response.data;
+        
+        const messages = response.data.map(message => ({
+          ...message,
+          conversationId: this.conversation.id
+        }));
+        
+        this.messages = messages;
         this.$emit('refresh-conversations');
         this.scrollToBottom();
       } catch (error) {
@@ -136,7 +141,7 @@ export default {
         } else {
           console.log('Sending message to existing chat:', this.conversation.id);
           
-          // Check if we're replying to a message
+
           if (this.replyToMessage && this.replyToMessage.id) {
             console.log('Sending reply to message:', this.replyToMessage.id);
             
@@ -154,10 +159,16 @@ export default {
               payload
             );
             
-            this.messages.push(response.data);
+
+            const newMessage = {
+              ...response.data,
+              conversationId: this.conversation.id
+            };
+            
+            this.messages.push(newMessage);
             this.replyToMessage = null;
           } else {
-            // Regular message
+
             const payload = {
               type: messageData.type,
               content: messageData.content || ''
@@ -172,7 +183,13 @@ export default {
               payload
             );
             
-            this.messages.push(response.data);
+
+            const newMessage = {
+              ...response.data,
+              conversationId: this.conversation.id
+            };
+            
+            this.messages.push(newMessage);
           }
           
           this.scrollToBottom();
@@ -235,7 +252,12 @@ export default {
           payload
         );
         
-        this.messages.push(response.data);
+        const newMessage = {
+          ...response.data,
+          conversationId: this.conversation.id
+        };
+        
+        this.messages.push(newMessage);
         this.scrollToBottom();
         this.showNotification('Reply sent successfully', 'success');
       } catch (error) {
@@ -315,7 +337,10 @@ export default {
       
       try {
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
-        const newMessages = response.data;
+        const newMessages = response.data.map(message => ({
+          ...message,
+          conversationId: this.conversation.id
+        }));
         
         if (newMessages.length === 0) return;
         
