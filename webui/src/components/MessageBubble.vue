@@ -1,11 +1,9 @@
 <script>
 import ForwardModal from './ForwardModal.vue';
-import ReplyModal from './ReplyModal.vue';
 
 export default {
   components: {
-    ForwardModal,
-    ReplyModal
+    ForwardModal
   },
   
   props: {
@@ -32,16 +30,7 @@ export default {
       showActions: false,
       imageLoaded: false,
       imageError: false,
-      showForwardModal: false,
-      showReplyModal: false,
-      showEmojiPicker: false,
-      comments: [],
-      loading: false,
-      submittingComment: false,
-      debugInfo: null,
-      commonEmojis: ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏', '🎉', '🤔'],
-      commentsPollingInterval: null,
-      commentsPollingDelay: 2000
+      showForwardModal: false
     }
   },
 
@@ -134,26 +123,10 @@ export default {
       this.$emit('forward', messageId, targetConversationId);
       this.showForwardModal = false;
     },
-    
-    handleReplyClick() {
-      console.log('Opening reply modal...');
-      this.showReplyModal = true;
-    },
-    
-    handleSendReply(originalMessage, replyData) {
-      console.log('Sending reply to message:', originalMessage.id, 'with data:', replyData);
-      this.$emit('send-reply', originalMessage, replyData);
-      this.showReplyModal = false;
-    },
 
     closeForwardModal() {
       console.log('Closing forward modal');
       this.showForwardModal = false;
-    },
-    
-    closeReplyModal() {
-      console.log('Closing reply modal');
-      this.showReplyModal = false;
     },
 
     handleImageLoad() {
@@ -406,23 +379,6 @@ export default {
         <i class="fas fa-share"></i> Forwarded
       </div>
       
-
-      <div v-if="message.replyTo" class="reply-info mb-2">
-        <div class="reply-preview">
-          <div class="reply-sender">
-            {{ message.replyTo.sender }}
-          </div>
-          <div class="reply-content">
-            <template v-if="message.replyTo.content">
-              {{ message.replyTo.content }}
-            </template>
-            <template v-else>
-              <i class="fas fa-camera me-1"></i> Photo
-            </template>
-          </div>
-        </div>
-      </div>
-      
       <div v-if="!isMyMessage && showUsername" class="message-sender mb-1">
         <small class="text-light">{{ message.sender.username }}</small>
       </div>
@@ -485,25 +441,8 @@ export default {
         </span>
       </div>
 
-
-      <div v-if="showActions" :class="['message-actions-below', isMyMessage ? 'user-message-actions' : 'other-message-actions']">
-        <div class="action-button-container">
-          <button 
-            @click.stop="handleReplyClick" 
-            class="action-button reply-action"
-            title="Reply"
-          >
-            <i class="fas fa-reply"></i>
-          </button>
-          
-          <button 
-            @click.stop="handleForwardClick"
-            class="action-button forward-action"
-            title="Forward"
-          >
-            <i class="fas fa-share"></i>
-          </button>
-          
+      <div v-if="showActions" class="message-actions position-absolute top-0 end-0 mt-1 me-1">
+        <div class="btn-group">
           <button 
             @click.stop="toggleEmojiPicker"
             class="action-button emoji-action"
@@ -515,10 +454,15 @@ export default {
           <button 
             v-if="isMyMessage"
             @click.stop="handleDelete" 
-            class="action-button delete-action"
-            title="Delete"
+            class="btn btn-sm btn-danger"
           >
             <i class="fas fa-trash"></i>
+          </button>
+          <button 
+            @click.stop="handleForwardClick"
+            class="btn btn-sm btn-info"
+          >
+            <i class="fas fa-share"></i>
           </button>
         </div>
       </div>
@@ -555,15 +499,6 @@ export default {
       @close="closeForwardModal"
       @forward="handleForward"
     />
-    
-
-    <ReplyModal
-      v-if="showReplyModal"
-      :show="showReplyModal"
-      :message="message"
-      @close="closeReplyModal"
-      @send-reply="handleSendReply"
-    />
   </div>
 </template>
 
@@ -574,66 +509,10 @@ export default {
   word-break: break-word;
 }
 
-
-.message-actions-below {
-  position: absolute;
-  bottom: -45px;
+.message-actions {
+  transform: translateY(-100%);
+  opacity: 0.9;
   z-index: 10;
-}
-
-
-.user-message-actions {
-  left: 40%; 
-  transform: translateX(-50%);
-}
-
-
-.other-message-actions {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.action-button-container {
-  display: flex;
-  background-color: #202c33;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  padding: 2px;
-}
-
-.action-button {
-  background: transparent;
-  border: none;
-  color: #fff;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 2px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.action-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.reply-action {
-  color: #00a884;
-}
-
-.forward-action {
-  color: #34B7F1;
-}
-
-.emoji-action {
-  color: #ffd700;
-}
-
-.delete-action {
-  color: #f15c6d;
 }
 
 .message-status {
@@ -647,6 +526,11 @@ export default {
 
 .message-status .fa-check-double {
   color: #34B7F1;
+}
+
+.btn-group .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
 }
 
 .media-container {
@@ -669,178 +553,5 @@ export default {
   font-size: 0.75rem;
   margin-bottom: 4px;
   font-style: italic;
-}
-
-.reply-info {
-  padding: 8px;
-  border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.2);
-  position: relative;
-  border-left: 3px solid #34B7F1;
-  margin-top: 4px;
-}
-
-.reply-preview {
-  font-size: 0.85rem;
-  overflow: hidden;
-}
-
-.reply-sender {
-  font-weight: 600;
-  color: #34B7F1;
-  margin-bottom: 2px;
-}
-
-.reply-content {
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-.comments-display {
-  margin-top: 6px;
-  margin-bottom: 6px;
-}
-
-.emoji-reactions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.emoji-reaction-bubble {
-  display: inline-flex;
-  align-items: center;
-  background-color: #202c33;
-  border-radius: 15px;
-  padding: 3px 8px;
-  cursor: pointer;
-  position: relative;
-  transition: background-color 0.2s;
-}
-
-.emoji-reaction-bubble:hover {
-  background-color: #2a3942;
-}
-
-.emoji-reaction-bubble.my-reaction {
-  background-color: #36434a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.emoji-reaction-bubble.my-reaction:hover {
-  background-color: #445258;
-}
-
-.emoji {
-  font-size: 1.1rem;
-  margin-right: 4px;
-}
-
-.count {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-
-.emoji-picker {
-  position: absolute;
-  bottom: -65px;
-  background-color: #2a3942;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  padding: 8px;
-  z-index: 20;
-}
-
-
-.emoji-picker-user {
-  left: 40%;
-  transform: translateX(-50%);
-  animation: fade-in-user 0.2s ease;
-}
-
-
-.emoji-picker-other {
-  left: 50%;
-  transform: translateX(-50%);
-  animation: fade-in-other 0.2s ease;
-}
-
-@keyframes fade-in-user {
-  from {
-    opacity: 0;
-    transform: translateY(10px) translateX(-50%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) translateX(-50%);
-  }
-}
-
-@keyframes fade-in-other {
-  from {
-    opacity: 0;
-    transform: translateY(10px) translateX(-50%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) translateX(-50%);
-  }
-}
-
-.emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
-
-.emoji-item {
-  background: transparent;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.emoji-item:hover {
-  background-color: #36434a;
-}
-
-.emoji-item.already-used {
-  position: relative;
-  background-color: #36434a;
-}
-
-.emoji-item.already-used:hover {
-  background-color: #445258;
-}
-
-.emoji-loading {
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.debug-info {
-  position: absolute;
-  top: -20px;
-  left: 0;
-  right: 0;
-  color: #ff6b6b;
-  font-size: 0.7rem;
-  background-color: rgba(0, 0, 0, 0.6);
-  padding: 2px 5px;
-  border-radius: 3px;
-  z-index: 5;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 </style>
