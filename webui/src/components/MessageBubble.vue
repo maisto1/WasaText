@@ -1,9 +1,11 @@
 <script>
 import ForwardModal from './ForwardModal.vue';
+import ReplyModal from './ReplyModal.vue';
 
 export default {
   components: {
-    ForwardModal
+    ForwardModal,
+    ReplyModal
   },
   
   props: {
@@ -30,75 +32,15 @@ export default {
       showActions: false,
       imageLoaded: false,
       imageError: false,
-      showForwardModal: false
+      showForwardModal: false,
+      showReplyModal: false
     }
-  },
-
-  computed: {
-    conversationId() {
-      if (this.message.conversationId) {
-        return this.message.conversationId;
-      }
-      
-      const currentRoute = this.$route || {};
-      if (currentRoute.params && currentRoute.params.id) {
-        return currentRoute.params.id;
-      }
-      
-      const path = window.location.hash;
-      const match = path.match(/\/chats\/(\d+)/);
-      return match ? match[1] : null;
-    },
-    
-    groupedEmojis() {
-      if (!this.comments || this.comments.length === 0) return [];
-      
-      const emojiGroups = {};
-      this.comments.forEach(comment => {
-        const emoji = comment.content;
-        if (!emojiGroups[emoji]) {
-          emojiGroups[emoji] = {
-            emoji: emoji,
-            count: 0,
-            commentIds: [],
-            usernames: [],
-            myComment: null
-          };
-        }
-        
-        emojiGroups[emoji].count++;
-        emojiGroups[emoji].commentIds.push(comment.id);
-        emojiGroups[emoji].usernames.push(comment.sender.username);
-        
-        if (this.isMyComment(comment)) {
-          emojiGroups[emoji].myComment = comment;
-        }
-      });
-      
-      return Object.values(emojiGroups);
-    },
-
-    myEmojiReactions() {
-      const myUsername = sessionStorage.getItem('username');
-      return this.comments
-        .filter(comment => comment.sender.username === myUsername)
-        .map(comment => comment.content);
-    }
-  },
-
-  created() {
-    this.fetchComments();
-    this.startCommentsPolling();
-  },
-  
-  beforeUnmount() {
-    this.stopCommentsPolling();
   },
 
   methods: {
     formatTimestamp(timestamp) {
       if (!timestamp) return '';
-      const date = new Date(timestamp);
+      const date = new Date(timestamp * 1000);
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
 
@@ -123,10 +65,26 @@ export default {
       this.$emit('forward', messageId, targetConversationId);
       this.showForwardModal = false;
     },
+    
+    handleReplyClick() {
+      console.log('Opening reply modal...');
+      this.showReplyModal = true;
+    },
+    
+    handleSendReply(originalMessage, replyData) {
+      console.log('Sending reply to message:', originalMessage.id, 'with data:', replyData);
+      this.$emit('send-reply', originalMessage, replyData);
+      this.showReplyModal = false;
+    },
 
     closeForwardModal() {
       console.log('Closing forward modal');
       this.showForwardModal = false;
+    },
+    
+    closeReplyModal() {
+      console.log('Closing reply modal');
+      this.showReplyModal = false;
     },
 
     handleImageLoad() {
@@ -167,201 +125,13 @@ export default {
           </html>
         `);
       }
-    },
-
-    toggleEmojiPicker() {
-      this.showEmojiPicker = !this.showEmojiPicker;
-      this.debugInfo = null;
-      
-
-      if (this.showEmojiPicker) {
-        this.showActions = false;
-      }
-    },
-
-    async fetchComments() {
-      if (!this.message?.id || !this.conversationId) {
-        console.warn('Cannot fetch comments: message id or conversation id is missing');
-        return;
-      }
-      
-      try {
-        console.log(`Fetching comments for message ${this.message.id} in conversation ${this.conversationId}`);
-        const response = await this.$axios.get(
-          `/conversations/${this.conversationId}/messages/${this.message.id}/comments/`
-        );
-        console.log('Fetched comments:', response.data);
-        this.comments = response.data;
-      } catch (error) {
-        console.error('Error fetching comments:', error);
-        
-        if (error.response && error.response.status !== 404) {
-          this.debugInfo = `Error fetching comments: ${error.message}`;
-        }
-      }
-    },
-    
-    async addComment(emoji) {
-      if (this.submittingComment) return;
-      
-      if (!this.message?.id || !this.conversationId) {
-        console.error('Cannot add comment: message id or conversation id is missing');
-        this.debugInfo = 'Cannot add comment: message id or conversation id is missing';
-        return;
-      }
-      
-      if (this.myEmojiReactions.includes(emoji)) {
-
-        const commentToDelete = this.comments.find(
-          comment => this.isMyComment(comment) && comment.content === emoji
-        );
-        
-        if (commentToDelete) {
-          this.deleteComment(commentToDelete.id);
-        }
-        return;
-      }
-      
-      this.submittingComment = true;
-      this.showEmojiPicker = false;
-      
-      try {
-        console.log(`Adding emoji comment "${emoji}" to message ${this.message.id} in conversation ${this.conversationId}`);
-        const payload = { content: emoji };
-        console.log('Comment payload:', payload);
-        
-        const response = await this.$axios.post(
-          `/conversations/${this.conversationId}/messages/${this.message.id}/comments/`,
-          payload
-        );
-        
-        console.log('Comment added successfully:', response.data);
-        this.comments.push(response.data);
-        this.debugInfo = null;
-      } catch (error) {
-        console.error('Error adding comment:', error);
-        this.debugInfo = `Error adding comment: ${error.message}`;
-        
-        if (error.response) {
-          console.error('Error response:', error.response.data);
-          this.debugInfo += ` - Status: ${error.response.status}`;
-        }
-      } finally {
-        this.submittingComment = false;
-      }
-    },
-    
-    async deleteComment(commentId) {
-      if (!this.message?.id || !this.conversationId) {
-        console.error('Cannot delete comment: message id or conversation id is missing');
-        return;
-      }
-      
-      try {
-        console.log(`Deleting comment ${commentId} from message ${this.message.id} in conversation ${this.conversationId}`);
-        
-        await this.$axios.delete(
-          `/conversations/${this.conversationId}/messages/${this.message.id}/comments/${commentId}`
-        );
-        
-        console.log('Comment deleted successfully');
-        this.comments = this.comments.filter(comment => comment.id !== commentId);
-      } catch (error) {
-        console.error('Error removing comment:', error);
-        this.debugInfo = `Error removing comment: ${error.message}`;
-      }
-    },
-    
-    isMyComment(comment) {
-      const myUsername = sessionStorage.getItem('username');
-      return comment.sender && comment.sender.username === myUsername;
-    },
-    
-    handleEmojiClick(emojiGroup) {
-      if (emojiGroup.myComment) {
-
-        this.deleteComment(emojiGroup.myComment.id);
-      } else {
-
-        this.addComment(emojiGroup.emoji);
-      }
-    },
-    
-
-    formatUsernames(usernames) {
-      if (!usernames || usernames.length === 0) return '';
-      
-      if (usernames.length <= 3) {
-        return usernames.join(', ');
-      } else {
-
-        return `${usernames.slice(0, 3).join(', ')} e altri ${usernames.length - 3}`;
-      }
-    },
-    
-
-    startCommentsPolling() {
-      this.stopCommentsPolling();
-      
-      this.commentsPollingInterval = setInterval(() => {
-        if (this.message?.id && this.conversationId) {
-          this.pollForComments();
-        }
-      }, this.commentsPollingDelay);
-    },
-    
-    stopCommentsPolling() {
-      if (this.commentsPollingInterval) {
-        clearInterval(this.commentsPollingInterval);
-        this.commentsPollingInterval = null;
-      }
-    },
-    
-    async pollForComments() {
-      if (!this.message?.id || !this.conversationId) return;
-      
-      try {
-        const response = await this.$axios.get(
-          `/conversations/${this.conversationId}/messages/${this.message.id}/comments/`
-        );
-        
-        const newComments = response.data;
-        if (!newComments) return;
-        
-
-        const hasChanges = this.hasCommentsChanges(this.comments, newComments);
-        
-        if (hasChanges) {
-          console.log('Comments updated:', newComments);
-          this.comments = newComments;
-        }
-      } catch (error) {
-
-        if (error.response && error.response.status !== 404) {
-          console.error('Error polling for comments:', error);
-        }
-      }
-    },
-    
-    hasCommentsChanges(oldComments, newComments) {
-      if (!oldComments || !newComments) return true;
-      if (oldComments.length !== newComments.length) return true;
-      
-
-      const oldIds = new Set(oldComments.map(c => c.id));
-      const newIds = new Set(newComments.map(c => c.id));
-      
-
-      return [...oldIds].some(id => !newIds.has(id)) || [...newIds].some(id => !oldIds.has(id));
     }
   }
 }
 </script>
 
 <template>
-  <div 
-    :class="['message mb-3 d-flex', isMyMessage ? 'justify-content-end' : 'justify-content-start']"
-  >
+  <div :class="['message mb-3 d-flex', isMyMessage ? 'justify-content-end' : 'justify-content-start']">
     <div 
       :class="['message-bubble p-2 rounded position-relative', 
                isMyMessage ? 'bg-primary text-white' : 'bg-secondary text-white']"
@@ -369,14 +139,26 @@ export default {
       @mouseenter="showActions = true"
       @mouseleave="showActions = false"
     >
-
-      <div v-if="debugInfo" class="debug-info">
-        <small>{{ debugInfo }}</small>
-      </div>
-    
-
+      <!-- Forwarded Label -->
       <div v-if="message.isForwarded" class="forwarded-label">
         <i class="fas fa-share"></i> Forwarded
+      </div>
+      
+      <!-- Reply Info -->
+      <div v-if="message.replyTo" class="reply-info mb-2">
+        <div class="reply-preview">
+          <div class="reply-sender">
+            {{ message.replyTo.sender }}
+          </div>
+          <div class="reply-content">
+            <template v-if="message.replyTo.content">
+              {{ message.replyTo.content }}
+            </template>
+            <template v-else>
+              <i class="fas fa-camera me-1"></i> Photo
+            </template>
+          </div>
+        </div>
       </div>
       
       <div v-if="!isMyMessage && showUsername" class="message-sender mb-1">
@@ -416,23 +198,6 @@ export default {
         </template>
       </div>
 
-
-      <div v-if="groupedEmojis.length > 0" class="comments-display">
-        <div class="emoji-reactions">
-          <div 
-            v-for="emojiGroup in groupedEmojis" 
-            :key="emojiGroup.emoji" 
-            class="emoji-reaction-bubble"
-            :class="{ 'my-reaction': emojiGroup.myComment }"
-            @click="handleEmojiClick(emojiGroup)"
-            :title="formatUsernames(emojiGroup.usernames)"
-          >
-            <span class="emoji">{{ emojiGroup.emoji }}</span>
-            <span class="count">{{ emojiGroup.count }}</span>
-          </div>
-        </div>
-      </div>
-
       <div class="message-meta d-flex justify-content-end align-items-center">
         <small class="text-light me-1">{{ formatTimestamp(message.timestamp) }}</small>
         <span v-if="isMyMessage" class="message-status">
@@ -441,56 +206,38 @@ export default {
         </span>
       </div>
 
-      <div v-if="showActions" class="message-actions position-absolute top-0 end-0 mt-1 me-1">
-        <div class="btn-group">
+      <!-- Menu delle azioni sotto al messaggio -->
+      <div v-if="showActions" class="message-actions-below">
+        <div class="action-button-container">
           <button 
-            @click.stop="toggleEmojiPicker"
-            class="action-button emoji-action"
-            title="React with emoji"
+            @click.stop="handleReplyClick" 
+            class="action-button reply-action"
+            title="Reply"
           >
-            <i class="far fa-smile"></i>
+            <i class="fas fa-reply"></i>
+          </button>
+          
+          <button 
+            @click.stop="handleForwardClick"
+            class="action-button forward-action"
+            title="Forward"
+          >
+            <i class="fas fa-share"></i>
           </button>
           
           <button 
             v-if="isMyMessage"
             @click.stop="handleDelete" 
-            class="btn btn-sm btn-danger"
+            class="action-button delete-action"
+            title="Delete"
           >
             <i class="fas fa-trash"></i>
           </button>
-          <button 
-            @click.stop="handleForwardClick"
-            class="btn btn-sm btn-info"
-          >
-            <i class="fas fa-share"></i>
-          </button>
-        </div>
-      </div>
-
-
-      <div v-if="showEmojiPicker" 
-           :class="['emoji-picker', isMyMessage ? 'emoji-picker-user' : 'emoji-picker-other']"
-           @click.stop>
-        <div class="emoji-grid">
-          <button 
-            v-for="emoji in commonEmojis" 
-            :key="emoji"
-            class="emoji-item"
-            :class="{ 'already-used': myEmojiReactions.includes(emoji) }"
-            @click.stop="addComment(emoji)"
-          >
-            {{ emoji }}
-          </button>
-        </div>
-        <div v-if="submittingComment" class="emoji-loading">
-          <div class="spinner-border spinner-border-sm text-light" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
         </div>
       </div>
     </div>
     
-
+    <!-- Forward Modal -->
     <ForwardModal
       v-if="showForwardModal"
       :show="showForwardModal"
@@ -498,6 +245,15 @@ export default {
       :message-id="message.id"
       @close="closeForwardModal"
       @forward="handleForward"
+    />
+    
+    <!-- Reply Modal -->
+    <ReplyModal
+      v-if="showReplyModal"
+      :show="showReplyModal"
+      :message="message"
+      @close="closeReplyModal"
+      @send-reply="handleSendReply"
     />
   </div>
 </template>
@@ -509,10 +265,52 @@ export default {
   word-break: break-word;
 }
 
-.message-actions {
-  transform: translateY(-100%);
-  opacity: 0.9;
+/* Stile per il menu delle azioni sotto al messaggio */
+.message-actions-below {
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
+}
+
+.action-button-container {
+  display: flex;
+  background-color: #202c33;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  padding: 2px;
+}
+
+.action-button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.reply-action {
+  color: #00a884;
+}
+
+.forward-action {
+  color: #34B7F1;
+}
+
+.delete-action {
+  color: #f15c6d;
 }
 
 .message-status {
@@ -526,11 +324,6 @@ export default {
 
 .message-status .fa-check-double {
   color: #34B7F1;
-}
-
-.btn-group .btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
 }
 
 .media-container {
@@ -553,5 +346,32 @@ export default {
   font-size: 0.75rem;
   margin-bottom: 4px;
   font-style: italic;
+}
+
+.reply-info {
+  padding: 8px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.2);
+  position: relative;
+  border-left: 3px solid #34B7F1;
+  margin-top: 4px;
+}
+
+.reply-preview {
+  font-size: 0.85rem;
+  overflow: hidden;
+}
+
+.reply-sender {
+  font-weight: 600;
+  color: #34B7F1;
+  margin-bottom: 2px;
+}
+
+.reply-content {
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
