@@ -125,7 +125,10 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		}
 		stmt, err := tx.Prepare(`UPDATE Messages SET status = 'read' WHERE message_id = ?`)
 		if err != nil {
-			tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				return messages, err
+			}
 			return messages, err
 		}
 		defer stmt.Close()
@@ -133,7 +136,10 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		for _, mid := range messagesToUpdate {
 			_, err := stmt.Exec(mid)
 			if err != nil {
-				tx.Rollback()
+				rollbackErr := tx.Rollback()
+				if rollbackErr != nil {
+					return messages, err
+				}
 				return messages, err
 			}
 			for i := range messages {

@@ -97,6 +97,12 @@ func (rt *_router) CreateConversation(w http.ResponseWriter, r *http.Request, ps
 	message = message + "conversation created with ID: " + strconv.Itoa(conversationID) + "\n"
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(jsonResponse)
+
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		rt.baseLogger.WithError(err).Error(message + "error sending response")
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
 	ctx.Logger.Info(message)
 }
