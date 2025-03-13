@@ -1,11 +1,13 @@
 <script>
 import MessageBubble from './MessageBubble.vue';
 import ChatInput from './ChatInput.vue';
+import EmojiReaction from './EmojiReaction.vue';
 
 export default {
   components: {
     MessageBubble,
-    ChatInput
+    ChatInput,
+    EmojiReaction
   },
 
   props: {
@@ -34,7 +36,7 @@ export default {
       sendingMessage: false,
       isGroupChat: false,
       pollingInterval: null,
-      pollingDelay: 1000,
+      pollingDelay: 3000,
       lastMessageId: null,
       replyToMessage: null
     }
@@ -68,7 +70,7 @@ export default {
           this.messages = [];
         }
         
-        // Reset reply state when conversation changes
+
         this.replyToMessage = null;
       }
     },
@@ -136,7 +138,7 @@ export default {
         } else {
           console.log('Sending message to existing chat:', this.conversation.id);
           
-          // Check if we're replying to a message
+        
           if (this.replyToMessage && this.replyToMessage.id) {
             console.log('Sending reply to message:', this.replyToMessage.id);
             
@@ -157,7 +159,7 @@ export default {
             this.messages.push(response.data);
             this.replyToMessage = null;
           } else {
-            // Regular message
+          
             const payload = {
               type: messageData.type,
               content: messageData.content || ''
@@ -244,6 +246,22 @@ export default {
       } finally {
         this.sendingMessage = false;
       }
+    },
+    
+    
+    async handleReactionAdded(reaction) {
+      console.log('Reaction added:', reaction);
+      
+    },
+
+    async handleReactionUpdated(reaction) {
+      console.log('Reaction updated:', reaction);
+     
+    },
+
+    async handleReactionRemoved(reaction) {
+      console.log('Reaction removed:', reaction);
+      
     },
     
     cancelReply() {
@@ -399,9 +417,13 @@ export default {
           :isMyMessage="isMyMessage(message)"
           :showUsername="isGroupChat"
           :availableConversations="forwardingConversations"
+          :conversationId="conversation.id"
           @delete="deleteMessage"
           @forward="forwardMessage"
           @send-reply="handleSendReply"
+          @reaction-added="handleReactionAdded"
+          @reaction-updated="handleReactionUpdated"
+          @reaction-removed="handleReactionRemoved"
         />
       </template>
     </div>

@@ -1,11 +1,13 @@
 <script>
 import ForwardModal from './ForwardModal.vue';
 import ReplyModal from './ReplyModal.vue';
+import EmojiReaction from './EmojiReaction.vue';
 
 export default {
   components: {
     ForwardModal,
-    ReplyModal
+    ReplyModal,
+    EmojiReaction
   },
   
   props: {
@@ -24,6 +26,10 @@ export default {
     availableConversations: {
       type: Array,
       default: () => []
+    },
+    conversationId: {
+      type: Number,
+      required: true
     }
   },
 
@@ -34,18 +40,33 @@ export default {
       imageLoaded: false,
       imageError: false,
       showForwardModal: false,
-      showReplyModal: false
+      showReplyModal: false,
+      reactions: [],
+      comments: [],
+      reactionPollingTimer: null
     }
   },
 
   created() {
     window.addEventListener('click', this.closeContextMenu);
     window.addEventListener('scroll', this.closeContextMenu);
+    
+
+    this.startCommentsPolling();
   },
   
   beforeUnmount() {
     window.removeEventListener('click', this.closeContextMenu);
     window.removeEventListener('scroll', this.closeContextMenu);
+    
+
+    this.stopCommentsPolling();
+  },
+  
+  computed: {
+    myUsername() {
+      return sessionStorage.getItem('username');
+    }
   },
 
   methods: {
@@ -56,7 +77,7 @@ export default {
     },
 
     handleDelete() {
-      if (confirm('Are you sure you want to delete this message?')) {
+      if (confirm('Sei sicuro di voler eliminare questo messaggio?')) {
         this.$emit('delete', this.message.id);
       }
       this.closeContextMenu();
@@ -65,10 +86,9 @@ export default {
     handleForwardClick() {
       console.log('Opening forward modal...');
       if (this.availableConversations.length === 0) {
-        alert('No conversations available to forward to');
+        alert('Nessuna conversazione disponibile per l\'inoltro');
       } else {
         this.showForwardModal = true;
-        console.log('Forward modal should be open now:', this.showForwardModal);
       }
       this.closeContextMenu();
     },
@@ -92,12 +112,10 @@ export default {
     },
 
     closeForwardModal() {
-      console.log('Closing forward modal');
       this.showForwardModal = false;
     },
     
     closeReplyModal() {
-      console.log('Closing reply modal');
       this.showReplyModal = false;
     },
 
@@ -146,26 +164,26 @@ export default {
       event.preventDefault();
       event.stopPropagation();
       
+
       this.closeContextMenu();
       
 
       const x = event.clientX;
       const y = event.clientY;
-      
+
       const menuWidth = 180;
-      const menuHeight = 150;
+      const menuHeight = 180;
       
 
       const adjustedX = Math.min(x, window.innerWidth - menuWidth - 10);
       
- 
+      
       const adjustedY = Math.min(y, window.innerHeight - menuHeight - 10);
       
-
+     
       this.contextMenuPosition = { x: adjustedX, y: adjustedY };
       this.showContextMenu = true;
       
-
       setTimeout(() => {
         this.addClickOutsideListener();
       }, 100);
@@ -185,11 +203,91 @@ export default {
     },
     
     closeContextMenu() {
- 
+
       document.removeEventListener('click', this.handleClickOutside);
       document.removeEventListener('contextmenu', this.handleClickOutside);
       
       this.showContextMenu = false;
+    },
+    
+
+    async fetchComments() {
+      try {
+        const response = await this.$axios.get(`/conversations/${this.conversationId}/messages/${this.message.id}/comments/`);
+        this.comments = response.data;
+        
+      
+        this.processReactionsFromComments();
+      } catch (error) {
+        console.error('Error fetching comments/reactions:', error);
+      }
+    },
+    
+    processReactionsFromComments() {
+    
+      this.reactions = [];
+      
+
+      this.comments.forEach(comment => {
+        if (comment.content && comment.content.startsWith('reaction:')) {
+          const emoji = comment.content.replace('reaction:', '');
+          
+          this.reactions.push({
+            id: comment.id,
+            messageId: this.message.id,
+            username: comment.sender.username,
+            emoji: emoji,
+            timestamp: comment.timestamp
+          });
+        }
+      });
+      
+     
+      this.reactions.sort((a, b) => {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
+    },
+    
+    startCommentsPolling() {
+   
+      this.fetchComments();
+      
+      this.reactionPollingTimer = setInterval(() => {
+        this.fetchComments();
+      }, 3000);
+    },
+    
+    stopCommentsPolling() {
+      if (this.reactionPollingTimer) {
+        clearInterval(this.reactionPollingTimer);
+        this.reactionPollingTimer = null;
+      }
+    },
+    
+
+    handleReactionAdded(reaction) {
+
+      this.reactions.push(reaction);
+    },
+    
+    handleReactionUpdated(updatedReaction) {
+ 
+      const index = this.reactions.findIndex(r => r.username === updatedReaction.username);
+      if (index !== -1) {
+        this.reactions[index].emoji = updatedReaction.emoji;
+      }
+    },
+    
+    handleReactionRemoved(removedReaction) {
+
+      this.reactions = this.reactions.filter(r => r.username !== removedReaction.username);
+    },
+    
+
+    handleReactClick() {
+      this.closeContextMenu();
+
+      this.$refs.emojiReaction.openEmojiPicker();
     }
   }
 }
@@ -203,11 +301,12 @@ export default {
       :style="[message.type === 'media' ? {'max-width': '300px'} : {'max-width': '70%'}]"
       @contextmenu="showContextMenuHandler"
     >
-
+      <!-- Forwarded Label -->
       <div v-if="message.isForwarded" class="forwarded-label">
         <i class="fas fa-share"></i> Forwarded
       </div>
       
+      <!-- Reply Info -->
       <div v-if="message.replyTo" class="reply-info mb-2">
         <div class="reply-preview">
           <div class="reply-sender">
@@ -269,9 +368,21 @@ export default {
           <i v-else class="fas fa-check" title="Sent"></i>
         </span>
       </div>
+      
+      <!-- Componente reazioni -->
+      <EmojiReaction 
+        ref="emojiReaction"
+        :reactions="reactions"
+        :message-id="message.id"
+        :conversation-id="conversationId"
+        :my-username="myUsername"
+        @reaction-added="handleReactionAdded"
+        @reaction-updated="handleReactionUpdated"
+        @reaction-removed="handleReactionRemoved"
+      />
     </div>
     
-
+    <!-- Teleport del menu contestuale a body per evitare problemi di posizionamento -->
     <Teleport to="body">
       <div 
         v-if="showContextMenu" 
@@ -284,6 +395,11 @@ export default {
         @click.stop
         @contextmenu.prevent
       >
+        <div class="menu-item" @click="handleReactClick">
+          <i class="fas fa-smile me-2 text-warning"></i>
+          <span>Reagisci</span>
+        </div>
+        
         <div class="menu-item" @click="handleReplyClick">
           <i class="fas fa-reply me-2 text-success"></i>
           <span>Rispondi</span>
@@ -301,7 +417,7 @@ export default {
       </div>
     </Teleport>
     
-
+    <!-- Forward Modal -->
     <ForwardModal
       v-if="showForwardModal"
       :show="showForwardModal"
@@ -311,7 +427,7 @@ export default {
       @forward="handleForward"
     />
     
-
+    <!-- Reply Modal -->
     <ReplyModal
       v-if="showReplyModal"
       :show="showReplyModal"
@@ -329,7 +445,7 @@ export default {
   word-break: break-word;
 }
 
-
+/* Stile del menu contestuale */
 .message-context-menu {
   position: fixed;
   z-index: 9999;
