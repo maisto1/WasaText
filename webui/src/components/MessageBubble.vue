@@ -310,7 +310,7 @@ export default {
       <div v-if="message.replyTo" class="reply-info mb-2">
         <div class="reply-preview">
           <div class="reply-sender">
-            {{ message.replyTo.sender }}
+            {{ message.replyTo.senderName }}
           </div>
           <div class="reply-content">
             <template v-if="message.replyTo.content">

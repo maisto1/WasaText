@@ -3,7 +3,7 @@ package models
 type ReplyInfo struct {
 	ID      int64  `json:"id"`
 	Content string `json:"content"`
-	Sender  string `json:"sender"`
+	Sender  string `json:"senderName"`
 }
 
 type Message struct {
