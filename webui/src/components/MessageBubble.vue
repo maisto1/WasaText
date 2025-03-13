@@ -29,12 +29,23 @@ export default {
 
   data() {
     return {
-      showActions: false,
+      showContextMenu: false,
+      contextMenuPosition: { x: 0, y: 0 },
       imageLoaded: false,
       imageError: false,
       showForwardModal: false,
       showReplyModal: false
     }
+  },
+
+  created() {
+    window.addEventListener('click', this.closeContextMenu);
+    window.addEventListener('scroll', this.closeContextMenu);
+  },
+  
+  beforeUnmount() {
+    window.removeEventListener('click', this.closeContextMenu);
+    window.removeEventListener('scroll', this.closeContextMenu);
   },
 
   methods: {
@@ -48,6 +59,7 @@ export default {
       if (confirm('Are you sure you want to delete this message?')) {
         this.$emit('delete', this.message.id);
       }
+      this.closeContextMenu();
     },
 
     handleForwardClick() {
@@ -58,6 +70,7 @@ export default {
         this.showForwardModal = true;
         console.log('Forward modal should be open now:', this.showForwardModal);
       }
+      this.closeContextMenu();
     },
 
     handleForward(messageId, targetConversationId) {
@@ -69,6 +82,7 @@ export default {
     handleReplyClick() {
       console.log('Opening reply modal...');
       this.showReplyModal = true;
+      this.closeContextMenu();
     },
     
     handleSendReply(originalMessage, replyData) {
@@ -125,6 +139,59 @@ export default {
           </html>
         `);
       }
+    },
+    
+    showContextMenuHandler(event) {
+      // Previene l'apertura del menu contestuale del browser
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // Chiude qualsiasi menu contestuale aperto
+      this.closeContextMenu();
+      
+      // Calcola la posizione del menu
+      const x = event.clientX;
+      const y = event.clientY;
+      
+      // Assicura che il menu sia visibile completamente nella finestra
+      const menuWidth = 180; // larghezza del menu in pixel
+      const menuHeight = 150; // altezza approssimativa del menu
+      
+      // Regola la posizione orizzontale
+      const adjustedX = Math.min(x, window.innerWidth - menuWidth - 10);
+      
+      // Regola la posizione verticale
+      const adjustedY = Math.min(y, window.innerHeight - menuHeight - 10);
+      
+      // Imposta la posizione e mostra il menu
+      this.contextMenuPosition = { x: adjustedX, y: adjustedY };
+      this.showContextMenu = true;
+      
+      // Aggiunge un timeout per evitare che il menu venga chiuso immediatamente
+      setTimeout(() => {
+        this.addClickOutsideListener();
+      }, 100);
+    },
+    
+    addClickOutsideListener() {
+      // Questo event listener viene aggiunto solo quando il menu è aperto
+      document.addEventListener('click', this.handleClickOutside);
+      document.addEventListener('contextmenu', this.handleClickOutside);
+    },
+    
+    handleClickOutside(event) {
+      const contextMenu = this.$refs.contextMenu;
+      if (contextMenu && !contextMenu.contains(event.target)) {
+        this.closeContextMenu();
+      }
+    },
+    
+    closeContextMenu() {
+      // Rimuove l'event listener quando il menu viene chiuso
+      document.removeEventListener('click', this.handleClickOutside);
+      document.removeEventListener('contextmenu', this.handleClickOutside);
+      
+      this.showContextMenu = false;
     }
   }
 }
@@ -136,8 +203,7 @@ export default {
       :class="['message-bubble p-2 rounded position-relative', 
                isMyMessage ? 'bg-primary text-white' : 'bg-secondary text-white']"
       :style="[message.type === 'media' ? {'max-width': '300px'} : {'max-width': '70%'}]"
-      @mouseenter="showActions = true"
-      @mouseleave="showActions = false"
+      @contextmenu="showContextMenuHandler"
     >
       <!-- Forwarded Label -->
       <div v-if="message.isForwarded" class="forwarded-label">
@@ -187,6 +253,7 @@ export default {
               @load="handleImageLoad"
               @error="handleImageError"
               @click="openMediaInNewTab"
+              @contextmenu="showContextMenuHandler"
             />
           </div>
           
@@ -205,37 +272,37 @@ export default {
           <i v-else class="fas fa-check" title="Sent"></i>
         </span>
       </div>
-
-      <!-- Menu delle azioni sotto al messaggio -->
-      <div v-if="showActions" class="message-actions-below">
-        <div class="action-button-container">
-          <button 
-            @click.stop="handleReplyClick" 
-            class="action-button reply-action"
-            title="Reply"
-          >
-            <i class="fas fa-reply"></i>
-          </button>
-          
-          <button 
-            @click.stop="handleForwardClick"
-            class="action-button forward-action"
-            title="Forward"
-          >
-            <i class="fas fa-share"></i>
-          </button>
-          
-          <button 
-            v-if="isMyMessage"
-            @click.stop="handleDelete" 
-            class="action-button delete-action"
-            title="Delete"
-          >
-            <i class="fas fa-trash"></i>
-          </button>
+    </div>
+    
+    <!-- Teleport del menu contestuale a body per evitare problemi di posizionamento -->
+    <Teleport to="body">
+      <div 
+        v-if="showContextMenu" 
+        ref="contextMenu"
+        class="message-context-menu"
+        :style="{
+          top: `${contextMenuPosition.y}px`,
+          left: `${contextMenuPosition.x}px`
+        }"
+        @click.stop
+        @contextmenu.prevent
+      >
+        <div class="menu-item" @click="handleReplyClick">
+          <i class="fas fa-reply me-2 text-success"></i>
+          <span>Rispondi</span>
+        </div>
+        
+        <div class="menu-item" @click="handleForwardClick">
+          <i class="fas fa-share me-2 text-info"></i>
+          <span>Inoltra</span>
+        </div>
+        
+        <div v-if="isMyMessage" class="menu-item delete" @click="handleDelete">
+          <i class="fas fa-trash me-2 text-danger"></i>
+          <span>Elimina</span>
         </div>
       </div>
-    </div>
+    </Teleport>
     
     <!-- Forward Modal -->
     <ForwardModal
@@ -265,52 +332,47 @@ export default {
   word-break: break-word;
 }
 
-/* Stile per il menu delle azioni sotto al messaggio */
-.message-actions-below {
-  position: absolute;
-  bottom: -45px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-}
-
-.action-button-container {
-  display: flex;
+/* Stile del menu contestuale */
+.message-context-menu {
+  position: fixed;
+  z-index: 9999;
   background-color: #202c33;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  padding: 2px;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  min-width: 180px;
+  overflow: hidden;
+  user-select: none;
+  border: 1px solid #36434a;
+  animation: fadeInMenu 0.2s ease-out;
 }
 
-.action-button {
-  background: transparent;
-  border: none;
-  color: #fff;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+@keyframes fadeInMenu {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.menu-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #e9edef;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 2px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
 }
 
-.action-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.menu-item:hover {
+  background-color: #2a3942;
 }
 
-.reply-action {
-  color: #00a884;
-}
-
-.forward-action {
-  color: #34B7F1;
-}
-
-.delete-action {
-  color: #f15c6d;
+.menu-item.delete {
+  border-top: 1px solid #36434a;
 }
 
 .message-status {
