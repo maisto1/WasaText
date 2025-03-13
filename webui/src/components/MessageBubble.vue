@@ -142,39 +142,37 @@ export default {
     },
     
     showContextMenuHandler(event) {
-      // Previene l'apertura del menu contestuale del browser
+
       event.preventDefault();
       event.stopPropagation();
       
-      // Chiude qualsiasi menu contestuale aperto
       this.closeContextMenu();
       
-      // Calcola la posizione del menu
+
       const x = event.clientX;
       const y = event.clientY;
       
-      // Assicura che il menu sia visibile completamente nella finestra
-      const menuWidth = 180; // larghezza del menu in pixel
-      const menuHeight = 150; // altezza approssimativa del menu
+      const menuWidth = 180;
+      const menuHeight = 150;
       
-      // Regola la posizione orizzontale
+
       const adjustedX = Math.min(x, window.innerWidth - menuWidth - 10);
       
-      // Regola la posizione verticale
+ 
       const adjustedY = Math.min(y, window.innerHeight - menuHeight - 10);
       
-      // Imposta la posizione e mostra il menu
+
       this.contextMenuPosition = { x: adjustedX, y: adjustedY };
       this.showContextMenu = true;
       
-      // Aggiunge un timeout per evitare che il menu venga chiuso immediatamente
+
       setTimeout(() => {
         this.addClickOutsideListener();
       }, 100);
     },
     
     addClickOutsideListener() {
-      // Questo event listener viene aggiunto solo quando il menu è aperto
+
       document.addEventListener('click', this.handleClickOutside);
       document.addEventListener('contextmenu', this.handleClickOutside);
     },
@@ -187,7 +185,7 @@ export default {
     },
     
     closeContextMenu() {
-      // Rimuove l'event listener quando il menu viene chiuso
+ 
       document.removeEventListener('click', this.handleClickOutside);
       document.removeEventListener('contextmenu', this.handleClickOutside);
       
@@ -205,12 +203,11 @@ export default {
       :style="[message.type === 'media' ? {'max-width': '300px'} : {'max-width': '70%'}]"
       @contextmenu="showContextMenuHandler"
     >
-      <!-- Forwarded Label -->
+
       <div v-if="message.isForwarded" class="forwarded-label">
         <i class="fas fa-share"></i> Forwarded
       </div>
       
-      <!-- Reply Info -->
       <div v-if="message.replyTo" class="reply-info mb-2">
         <div class="reply-preview">
           <div class="reply-sender">
@@ -274,7 +271,7 @@ export default {
       </div>
     </div>
     
-    <!-- Teleport del menu contestuale a body per evitare problemi di posizionamento -->
+
     <Teleport to="body">
       <div 
         v-if="showContextMenu" 
@@ -304,7 +301,7 @@ export default {
       </div>
     </Teleport>
     
-    <!-- Forward Modal -->
+
     <ForwardModal
       v-if="showForwardModal"
       :show="showForwardModal"
@@ -314,7 +311,7 @@ export default {
       @forward="handleForward"
     />
     
-    <!-- Reply Modal -->
+
     <ReplyModal
       v-if="showReplyModal"
       :show="showReplyModal"
@@ -332,7 +329,7 @@ export default {
   word-break: break-word;
 }
 
-/* Stile del menu contestuale */
+
 .message-context-menu {
   position: fixed;
   z-index: 9999;
