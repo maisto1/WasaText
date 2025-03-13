@@ -22,7 +22,16 @@ export default {
   data() {
     return {
       showEmojiPicker: false,
-      availableEmojis: ['👍', '❤️', '😂', '😮', '😢', '🙏'],
+      availableEmojis: [
+        { emoji: '👍', color: '#FFD767' },
+        { emoji: '❤️', color: '#F7574D' },
+        { emoji: '😂', color: '#FECD3D' },
+        { emoji: '😮', color: '#6EB1FF' },
+        { emoji: '😢', color: '#6EB1FF' },
+        { emoji: '🙏', color: '#8A65CF' },
+        { emoji: '🎉', color: '#FF8F5F' },
+        { emoji: '🔥', color: '#FF5F5F' }
+      ],
       isAddingReaction: false
     }
   },
@@ -45,36 +54,44 @@ export default {
       return this.reactions.some(reaction => reaction.username === this.myUsername);
     },
     
+
     myReaction() {
       return this.reactions.find(reaction => reaction.username === this.myUsername);
     }
   },
   
   methods: {
+
     openEmojiPicker() {
       this.showEmojiPicker = true;
     },
     
+
     closeEmojiPicker() {
       this.showEmojiPicker = false;
     },
     
-    async selectEmoji(emoji) {
+
+    async selectEmoji(emojiObj) {
       this.closeEmojiPicker();
       
       if (this.isAddingReaction) return;
       
       try {
         this.isAddingReaction = true;
+        const emoji = emojiObj.emoji;
         
         if (this.hasReacted) {
+
           if (this.myReaction.emoji === emoji) {
+
             await this.removeReaction();
           } else {
+
             await this.updateReaction(emoji);
           }
         } else {
-    
+
           await this.addReaction(emoji);
         }
       } catch (error) {
@@ -84,25 +101,50 @@ export default {
       }
     },
     
+   
+    getReactionStyle(emoji) {
 
+      const emojiObj = this.availableEmojis.find(e => e.emoji === emoji);
+      
+
+      if (emojiObj) {
+        if (this.reactions.some(r => r.username === this.myUsername && r.emoji === emoji)) {
+
+          return {
+            backgroundColor: emojiObj.color + '40',
+            borderLeft: `3px solid ${emojiObj.color}`
+          };
+        } else {
+       
+          return {
+            backgroundColor: emojiObj.color + '20'
+          };
+        }
+      }
+      
+      return {};
+    },
+    
+  
     async handleReactionBadgeClick(emoji) {
       if (this.isAddingReaction) return;
       
       try {
         this.isAddingReaction = true;
         
+   
         const userReactionWithEmoji = this.reactions.find(r => 
           r.username === this.myUsername && r.emoji === emoji
         );
         
         if (userReactionWithEmoji) {
- 
+  
           await this.removeReaction();
         } else if (this.hasReacted) {
-         
+          
           await this.updateReaction(emoji);
         } else {
-         
+     
           await this.addReaction(emoji);
         }
       } catch (error) {
@@ -115,7 +157,7 @@ export default {
 
     async addReaction(emoji) {
       try {
-
+     
         const response = await this.$axios.post(`/conversations/${this.conversationId}/messages/${this.messageId}/comments/`, {
           content: `reaction:${emoji}`
         });
@@ -132,18 +174,17 @@ export default {
       }
     },
     
-
+ 
     async updateReaction(emoji) {
       try {
-
+      
         await this.removeReaction();
         
-
+   
         const response = await this.$axios.post(`/conversations/${this.conversationId}/messages/${this.messageId}/comments/`, {
           content: `reaction:${emoji}`
         });
         
-      
         this.$emit('reaction-updated', {
           id: response.data.id,
           messageId: this.messageId,
@@ -157,7 +198,7 @@ export default {
       }
     },
     
-   
+
     async removeReaction() {
       try {
         if (!this.myReaction || !this.myReaction.id) {
@@ -165,10 +206,8 @@ export default {
           return;
         }
         
-        
         await this.$axios.delete(`/conversations/${this.conversationId}/messages/${this.messageId}/comments/${this.myReaction.id}`);
         
-       
         this.$emit('reaction-removed', {
           messageId: this.messageId,
           username: this.myUsername,
@@ -178,7 +217,6 @@ export default {
         console.error('Error removing reaction:', error);
       }
     },
-    
     
     showReactors(emoji) {
       if (!this.groupedReactions[emoji] || this.groupedReactions[emoji].length === 0) return '';
@@ -199,7 +237,6 @@ export default {
 
 <template>
   <div class="message-reactions">
-
     <div v-if="Object.keys(groupedReactions).length > 0" class="reaction-summary">
       <div 
         v-for="(reactors, emoji) in groupedReactions" 
@@ -208,30 +245,34 @@ export default {
         :class="{ 'my-reaction': reactors.some(r => r.username === myUsername) }"
         :title="showReactors(emoji)"
         @click="handleReactionBadgeClick(emoji)"
+        :style="getReactionStyle(emoji)"
       >
         <span class="emoji">{{ emoji }}</span>
         <span class="count">{{ reactors.length }}</span>
       </div>
     </div>
     
-    
     <Teleport to="body">
       <div v-if="showEmojiPicker" class="emoji-modal-overlay" @click="closeEmojiPicker">
         <div class="emoji-modal" @click.stop>
           <div class="emoji-modal-header">
-            <span>Choose a reaction</span>
+            <span>Scegli una reazione</span>
             <button class="close-button" @click="closeEmojiPicker">
               <i class="fas fa-times"></i>
             </button>
           </div>
           <div class="emoji-container">
             <button 
-              v-for="emoji in availableEmojis" 
-              :key="emoji"
+              v-for="emojiObj in availableEmojis" 
+              :key="emojiObj.emoji"
               class="emoji-button"
-              @click="selectEmoji(emoji)"
+              :style="{ backgroundColor: emojiObj.color + '30' }"
+              @click="selectEmoji(emojiObj)"
+              :title="emojiObj.label"
             >
-              {{ emoji }}
+              <span class="emoji-circle" :style="{ backgroundColor: emojiObj.color + '50' }">
+                {{ emojiObj.emoji }}
+              </span>
             </button>
           </div>
         </div>
@@ -256,36 +297,35 @@ export default {
 .reaction-badge {
   background-color: #2a3942;
   border-radius: 10px;
-  padding: 2px 6px;
+  padding: 3px 8px;
   display: flex;
   align-items: center;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .reaction-badge:hover {
-  background-color: #36434a;
+  transform: scale(1.05);
 }
 
 .my-reaction {
-  background-color: #045d4c;
-}
-
-.my-reaction:hover {
-  background-color: #06735e;
+  border-left: 3px solid #00a884;
 }
 
 .emoji {
-  font-size: 1rem;
-  margin-right: 3px;
+  font-size: 1.1rem;
+  margin-right: 5px;
 }
 
 .count {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
-
 
 .emoji-modal-overlay {
   position: fixed;
@@ -304,7 +344,7 @@ export default {
 .emoji-modal {
   background-color: #202c33;
   border-radius: 12px;
-  width: 300px;
+  width: 350px;
   max-width: 90vw;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   animation: modalFadeIn 0.2s ease-out;
@@ -348,26 +388,35 @@ export default {
   flex-wrap: wrap;
   padding: 16px;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .emoji-button {
-  background: transparent;
-  border: none;
-  font-size: 1.8rem;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  height: 50px;
-  width: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 8px;
+  transition: all 0.2s ease;
+  width: 60px;
+  height: 60px;
 }
 
 .emoji-button:hover {
-  background-color: #36434a;
+  transform: scale(1.1);
+}
+
+.emoji-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.8rem;
 }
 
 @keyframes modalFadeIn {
