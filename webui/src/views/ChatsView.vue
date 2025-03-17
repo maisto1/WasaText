@@ -4,6 +4,7 @@ import UserSearchResult from '../components/UserSearchResult.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ChatSection from '../components/ChatSection.vue'
 import ForwardModal from '../components/ForwardModal.vue'
+import CreateGroupModal from '../components/CreateGroupModal.vue'
 
 export default {
   components: {
@@ -11,7 +12,8 @@ export default {
     UserSearchResult,
     SearchBar,
     ChatSection,
-    ForwardModal
+    ForwardModal,
+    CreateGroupModal
   },
   
   data() {
@@ -25,10 +27,6 @@ export default {
       isSearching: false,
       searchLoading: false,
       showCreateGroup: false,
-      newGroupData: {
-        name: '',
-        participants: []
-      },
       tempChatUser: null,
       isTempChat: false,
       creatingConversation: false,
@@ -219,23 +217,6 @@ export default {
       }
     },
 
-    async createGroup() {
-      if (!this.newGroupData.name || this.newGroupData.participants.length === 0) return;
-      
-      try {
-        await this.$axios.post('/conversations/', {
-          groupName: this.newGroupData.name,
-          conversationType: 'group',
-          participants: this.newGroupData.participants
-        });
-        this.showCreateGroup = false;
-        this.newGroupData = { name: '', participants: [] };
-        await this.fetchConversations();
-      } catch (error) {
-        console.error('Error creating group:', error);
-      }
-    },
-
     selectConversation(conversation) {
       console.log('Selecting existing conversation:', conversation);
       this.selectedConversation = conversation;
@@ -272,6 +253,11 @@ export default {
       return `hsl(${h}, ${s}%, ${l}%)`;
     },
 
+    handleGroupCreated() {
+      this.fetchConversations();
+      this.showNotification('Group created successfully', 'success');
+    },
+
     logout() {
       sessionStorage.clear();
       
@@ -303,6 +289,10 @@ export default {
         <div class="d-flex justify-content-between align-items-center px-3 py-2">
           <h5 class="text-white mb-0">Chats</h5>
           <div class="d-flex align-items-center">
+            <button @click="showCreateGroup = true" class="btn btn-new-group me-2">
+              <i class="fas fa-users me-2"></i>
+              New Group
+            </button>
             <button @click="logout" class="btn btn-logout me-3">
               <i class="fas fa-sign-out-alt me-2"></i>
               Logout
@@ -387,26 +377,11 @@ export default {
       />
     </div>
 
-    <div v-if="showCreateGroup" class="modal-overlay">
-      <div class="modal-dialog">
-        <div class="modal-content bg-dark text-white">
-          <div class="modal-header">
-            <h5 class="modal-title">Create New Group</h5>
-            <button @click="showCreateGroup = false" class="btn-close btn-close-white"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Group Name</label>
-              <input v-model="newGroupData.name" type="text" class="form-control bg-secondary text-white">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button @click="showCreateGroup = false" class="btn btn-secondary">Cancel</button>
-            <button @click="createGroup" class="btn btn-primary">Create Group</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <CreateGroupModal 
+      :show="showCreateGroup" 
+      @close="showCreateGroup = false"
+      @created="handleGroupCreated"
+    />
 
     <transition name="toast">
       <div v-if="showToast" class="toast-container position-fixed p-3">
@@ -489,19 +464,6 @@ export default {
   border-radius: 6px;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .btn-outline-light {
   border-color: #36434a;
 }
@@ -543,6 +505,28 @@ export default {
 }
 
 .btn-logout:active {
+  transform: scale(0.95);
+}
+
+.btn-new-group {
+  background-color: transparent;
+  color: #e9edef;
+  border: 1px solid #00a884;
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.btn-new-group:hover {
+  background-color: #00a884;
+  color: white;
+  box-shadow: 0 0 8px rgba(0, 168, 132, 0.7);
+}
+
+.btn-new-group:active {
   transform: scale(0.95);
 }
 
@@ -608,6 +592,30 @@ export default {
 
 .toast-progress.error {
   background: #e74c3c;
+}
+
+.avatar-container {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-text {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 @keyframes progress {
