@@ -33,7 +33,7 @@ export default {
       isTempChat: false,
       creatingConversation: false,
       pollingInterval: null,
-      pollingDelay: 1000,
+      pollingDelay: 6000,
       showGroupManagement: false,
       currentUser: {
         username: '',

@@ -36,7 +36,7 @@ export default {
       sendingMessage: false,
       isGroupChat: false,
       pollingInterval: null,
-      pollingDelay: 3000,
+      pollingDelay: 6000,
       lastMessageId: null,
       replyToMessage: null
     }

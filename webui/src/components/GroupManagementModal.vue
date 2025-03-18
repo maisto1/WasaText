@@ -42,16 +42,16 @@ export default {
   
   methods: {
     async fetchGroupMembers() {
-
       this.isLoading = true;
       this.groupMembers = [];
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (this.conversation && this.conversation.partecipants) {
-          this.groupMembers = [...this.conversation.partecipants];
-        }
+        const response = await this.$axios.get(`/conversations/${this.conversation.id}/members/`);
+        this.groupMembers = response.data.map(member => ({
+          id: member.id,
+          username: member.username,
+          profilePhoto: member.profilePhoto
+        }));
       } catch (error) {
         console.error('Error fetching group members:', error);
         this.showNotification('Failed to load group members', 'error');
@@ -59,7 +59,6 @@ export default {
         this.isLoading = false;
       }
     },
-    
     async searchUsers() {
       if (!this.searchQuery.trim()) {
         this.searchResults = [];
@@ -448,9 +447,6 @@ export default {
                     </div>
                     <div class="user-info ms-2 flex-grow-1">
                       <div class="username">{{ member.username }}</div>
-                      <div v-if="member.isAdmin" class="admin-badge">
-                        Admin
-                      </div>
                     </div>
                     <button 
                       v-if="member.username !== sessionStorage.getItem('username')"
@@ -874,16 +870,6 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.admin-badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  background-color: rgba(0, 168, 132, 0.2);
-  color: #00a884;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-top: 3px;
 }
 
 .action-button {
