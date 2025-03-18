@@ -96,6 +96,11 @@ paths:
                       minLength: 4
                       maxLength: 1000000
                       example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
+                    conversationType:
+                      description: "The type of the conversation."
+                      type: string
+                      enum: ["private","group"]
+                      example: "group"
                     latestMessage:
                       allOf:
                         - $ref: '#/components/schemas/Message'    

@@ -10,7 +10,6 @@ import (
 // Get preview Conversations
 func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, error) {
 	previews := make([]models.Preview, 0)
-
 	var exists bool
 	err := db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM Users WHERE user_id = ?)", user_id).Scan(&exists)
 	if err != nil {
@@ -21,31 +20,30 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
 	}
 
 	rows, err := db.c.Query(`
-	WITH OtherUser AS (
-		SELECT 
-			p1.conversation_id,
-			u.user_id AS other_user_id,
-			u.username AS other_username,
-			u.profile_photo AS other_photo
-		FROM Partecipants p1
-		JOIN Partecipants p2 ON p1.conversation_id = p2.conversation_id
-		JOIN Users u ON u.user_id = p2.user_id
-		WHERE p1.user_id = ? AND p2.user_id != ?
-	)
-	SELECT 
-		c.conversation_id,
-		COALESCE(c.group_name, o.other_username, '') AS group_name,
-		COALESCE(c.group_photo, o.other_photo, '') AS group_photo
-	FROM Conversations c
-	LEFT JOIN OtherUser o ON c.conversation_id = o.conversation_id
-	WHERE c.conversation_id IN (
-		SELECT conversation_id 
-		FROM Partecipants 
-		WHERE user_id = ?
-	);
-
-	`, user_id, user_id, user_id)
-
+    WITH OtherUser AS (
+        SELECT
+            p1.conversation_id,
+            u.user_id AS other_user_id,
+            u.username AS other_username,
+            u.profile_photo AS other_photo
+        FROM Partecipants p1
+        JOIN Partecipants p2 ON p1.conversation_id = p2.conversation_id
+        JOIN Users u ON u.user_id = p2.user_id
+        WHERE p1.user_id = ? AND p2.user_id != ?
+    )
+    SELECT
+        c.conversation_id,
+        COALESCE(c.name, o.other_username, '') AS conversation_name,
+        COALESCE(c.conversation_photo, o.other_photo, '') AS conversation_photo,
+        c.conversation_type
+    FROM Conversations c
+    LEFT JOIN OtherUser o ON c.conversation_id = o.conversation_id
+    WHERE c.conversation_id IN (
+        SELECT conversation_id
+        FROM Partecipants
+        WHERE user_id = ?
+    );
+    `, user_id, user_id, user_id)
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +53,10 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
 		var conversation_id int64
 		var name string
 		var photo []byte
+		var conversationType string
 		var preview models.Preview
 
-		err = rows.Scan(&conversation_id, &name, &photo)
+		err = rows.Scan(&conversation_id, &name, &photo, &conversationType)
 		if err != nil {
 			return previews, err
 		}
@@ -68,6 +67,7 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
 		preview.Conversation_id = conversation_id
 		preview.Name = name
 		preview.Photo = photo
+		preview.ConversationType = conversationType
 
 		latestMessage, err := db.GetLatestMessage(conversation_id)
 		if err != nil {
@@ -135,44 +135,64 @@ func (db *appdbimpl) GetLatestMessage(conversation_id int64) (models.Message, er
 }
 
 // Create a new conversation
-func (db *appdbimpl) CreateConversation(user_id int64, group_name string, typeConv string, partecipant string) (int, error) {
+func (db *appdbimpl) CreateConversation(user_id int64, name string, typeConv string, partecipant string) (int, error) {
 	var conversation_id int64
 	var user_partecipant []models.User
+
+	// Validazione del tipo di conversazione
+	if typeConv != "private" && typeConv != "group" {
+		return 0, errors.New("invalid conversation type")
+	}
 
 	if typeConv == "private" {
 		user_partecipant = db.GetUsers(partecipant)
 		if len(user_partecipant) == 0 {
-			return 0, errors.New("partecipant not found")
+			return 0, errors.New("participant not found")
 		}
-		partecipant_id := user_partecipant[0].User_id
-		isVAlid, err := db.CheckPrivateConversation(user_id, partecipant_id)
+		participant_id := user_partecipant[0].User_id
+
+		isValid, err := db.CheckPrivateConversation(user_id, participant_id)
 		if err != nil {
 			return 0, err
 		}
-		if isVAlid {
-			return 0, errors.New("already have a conversation")
+		if isValid {
+			return 0, errors.New("conversation already exists")
 		}
 	}
 
-	err := db.c.QueryRow(`INSERT INTO Conversations (type) VALUES (?) RETURNING conversation_id;`, typeConv).Scan(&conversation_id)
+	// Per le conversazioni di gruppo, usa il nome passato
+	// Per le conversazioni private, usa il nome del partecipante
+	if typeConv == "private" && name == "" {
+		name = user_partecipant[0].Username
+	}
+
+	// Inserisci la conversazione con nome e tipo
+	err := db.c.QueryRow(
+		`INSERT INTO Conversations (name, conversation_type) VALUES (?, ?) RETURNING conversation_id;`,
+		name,
+		typeConv,
+	).Scan(&conversation_id)
 	if err != nil {
 		return 0, err
 	}
 
-	_, err = db.c.Exec(`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`, user_id, conversation_id)
+	// Inserisci il primo partecipante (creatore)
+	_, err = db.c.Exec(
+		`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`,
+		user_id,
+		conversation_id,
+	)
 	if err != nil {
 		return 0, err
 	}
 
+	// Per conversazioni private, aggiungi l'altro partecipante
 	if typeConv == "private" {
-
-		_, err = db.c.Exec(`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`, user_partecipant[0].User_id, conversation_id)
-		if err != nil {
-			return 0, err
-		}
-	} else {
-
-		_, err = db.c.Exec(`UPDATE Conversations SET group_name = ? WHERE conversation_id = ?;`, group_name, conversation_id)
+		_, err = db.c.Exec(
+			`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`,
+			user_partecipant[0].User_id,
+			conversation_id,
+		)
 		if err != nil {
 			return 0, err
 		}
@@ -180,19 +200,18 @@ func (db *appdbimpl) CreateConversation(user_id int64, group_name string, typeCo
 
 	return int(conversation_id), nil
 }
-
 func (db *appdbimpl) CheckPrivateConversation(user_id1, user_id2 int64) (bool, error) {
 	var count int
 
 	err := db.c.QueryRow(`
-		SELECT COUNT(*)
-		FROM Conversations c
-		JOIN Partecipants p1 ON c.conversation_id = p1.conversation_id
-		JOIN Partecipants p2 ON c.conversation_id = p2.conversation_id
-		WHERE c.type = 'private'
-		AND ((p1.user_id = ? AND p2.user_id = ?)
-		OR (p1.user_id = ? AND p2.user_id = ?))
-	`, user_id1, user_id2, user_id2, user_id1).Scan(&count)
+        SELECT COUNT(*)
+        FROM Conversations c
+        JOIN Partecipants p1 ON c.conversation_id = p1.conversation_id
+        JOIN Partecipants p2 ON c.conversation_id = p2.conversation_id
+        WHERE c.conversation_type = 'private'
+        AND ((p1.user_id = ? AND p2.user_id = ?)
+        OR (p1.user_id = ? AND p2.user_id = ?))
+    `, user_id1, user_id2, user_id2, user_id1).Scan(&count)
 
 	if err != nil {
 		return false, err

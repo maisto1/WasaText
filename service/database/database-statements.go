@@ -12,9 +12,9 @@ const (
 	conversationsTableCreationStatement = `
  CREATE TABLE "Conversations" (
  "conversation_id" INTEGER NOT NULL UNIQUE,
- "group_name" TEXT,
- "group_photo" BLOB,
- "type" TEXT,
+ "name" TEXT,
+ "conversation_photo" BLOB,
+ "conversation_type" TEXT CHECK(conversation_type IN ('private', 'group')),
  PRIMARY KEY("conversation_id" AUTOINCREMENT)
  );
  `
