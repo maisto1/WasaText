@@ -139,7 +139,6 @@ func (db *appdbimpl) CreateConversation(user_id int64, name string, typeConv str
 	var conversation_id int64
 	var user_partecipant []models.User
 
-	// Validazione del tipo di conversazione
 	if typeConv != "private" && typeConv != "group" {
 		return 0, errors.New("invalid conversation type")
 	}
@@ -160,13 +159,10 @@ func (db *appdbimpl) CreateConversation(user_id int64, name string, typeConv str
 		}
 	}
 
-	// Per le conversazioni di gruppo, usa il nome passato
-	// Per le conversazioni private, usa il nome del partecipante
 	if typeConv == "private" && name == "" {
 		name = user_partecipant[0].Username
 	}
 
-	// Inserisci la conversazione con nome e tipo
 	err := db.c.QueryRow(
 		`INSERT INTO Conversations (name, conversation_type) VALUES (?, ?) RETURNING conversation_id;`,
 		name,
@@ -176,7 +172,6 @@ func (db *appdbimpl) CreateConversation(user_id int64, name string, typeConv str
 		return 0, err
 	}
 
-	// Inserisci il primo partecipante (creatore)
 	_, err = db.c.Exec(
 		`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`,
 		user_id,
@@ -186,7 +181,6 @@ func (db *appdbimpl) CreateConversation(user_id int64, name string, typeConv str
 		return 0, err
 	}
 
-	// Per conversazioni private, aggiungi l'altro partecipante
 	if typeConv == "private" {
 		_, err = db.c.Exec(
 			`INSERT INTO Partecipants (user_id, conversation_id) VALUES (?, ?);`,

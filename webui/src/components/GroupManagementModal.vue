@@ -42,19 +42,11 @@ export default {
   
   methods: {
     async fetchGroupMembers() {
-      // Note: This is a mock implementation since the API doesn't provide a direct endpoint to fetch members
-      // In a real app, you would call an API endpoint that returns the group members
+
       this.isLoading = true;
       this.groupMembers = [];
       
       try {
-        // Placeholder implementation - in the actual app you might need a different approach 
-        // based on how your backend provides group member information
-        
-        // You could get this information from a message in the conversation or from participants array
-        // For now we'll just mock it with sample data
-        
-        // Simulating API call delay
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (this.conversation && this.conversation.partecipants) {
@@ -77,7 +69,6 @@ export default {
       try {
         const response = await this.$axios.get(`/users/?username=${this.searchQuery}`);
         
-        // Filter out users that are already in the group
         this.searchResults = response.data.filter(user => 
           !this.groupMembers.some(member => member.id === user.id)
         );
@@ -96,10 +87,10 @@ export default {
           username: user.username
         });
         
-        // Add user to local group members list
+    
         this.groupMembers.push(user);
         
-        // Clear search
+      
         this.searchQuery = '';
         this.searchResults = [];
         
@@ -130,7 +121,7 @@ export default {
       try {
         await this.$axios.delete(`/conversations/${this.conversation.id}/members/${user.id}`);
         
-        // Remove user from local group members list
+
         this.groupMembers = this.groupMembers.filter(member => member.id !== user.id);
         
         this.showNotification(`${user.username} removed from the group`, 'success');
@@ -306,7 +297,7 @@ export default {
   <div v-if="show" class="modal-overlay" @click="closeModal">
     <div class="modal-dialog group-management-modal" @click.stop>
       <div class="modal-content">
-        <!-- Modal Header -->
+      
         <div class="modal-header">
           <div class="d-flex align-items-center">
             <div class="group-avatar me-3">
@@ -329,8 +320,7 @@ export default {
             <i class="fas fa-times"></i>
           </button>
         </div>
-        
-        <!-- Modal Tabs -->
+       
         <div class="modal-tabs">
           <button 
             class="tab-button" 
@@ -358,21 +348,21 @@ export default {
           </button>
         </div>
         
-        <!-- Modal Body -->
+       
         <div class="modal-body">
-          <!-- Error Message -->
+       
           <div v-if="error" class="error-message mb-3">
             <i class="fas fa-exclamation-circle me-2"></i>
             {{ error }}
           </div>
           
-          <!-- Success Message -->
+    
           <div v-if="success" class="success-message mb-3">
             <i class="fas fa-check-circle me-2"></i>
             {{ success }}
           </div>
           
-          <!-- Members Tab Content -->
+      
           <div v-if="activeTab === 'members'" class="tab-content">
             <div class="input-group mb-3">
               <span class="input-group-text">
@@ -388,7 +378,7 @@ export default {
               >
             </div>
             
-            <!-- Search Results -->
+           
             <div v-if="searchResults.length > 0" class="search-results-container mb-4">
               <h6 class="section-title">
                 <i class="fas fa-user-plus me-2"></i>
@@ -422,7 +412,7 @@ export default {
               </div>
             </div>
             
-            <!-- Current Members -->
+         
             <div class="current-members-container">
               <h6 class="section-title">
                 <i class="fas fa-users me-2"></i>
@@ -476,7 +466,7 @@ export default {
             </div>
           </div>
           
-          <!-- Photo Tab Content -->
+         
           <div v-if="activeTab === 'photo'" class="tab-content">
             <div class="current-photo-container mb-4">
               <h6 class="section-title mb-3">Current Group Photo</h6>
@@ -539,7 +529,7 @@ export default {
             </div>
           </div>
           
-          <!-- Name Tab Content -->
+     
           <div v-if="activeTab === 'name'" class="tab-content">
             <h6 class="section-title mb-3">Change Group Name</h6>
             
@@ -572,7 +562,7 @@ export default {
           </div>
         </div>
         
-        <!-- Modal Footer -->
+     
         <div class="modal-footer">
           <button @click="closeModal" class="btn-close-modal">
             Close
@@ -581,7 +571,7 @@ export default {
       </div>
     </div>
     
-    <!-- Toast Notification -->
+
     <transition name="toast">
       <div v-if="showToast" class="toast-container position-fixed p-3">
         <div class="custom-toast" :class="toastType">
