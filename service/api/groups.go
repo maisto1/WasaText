@@ -181,3 +181,40 @@ func (rt *_router) EditName(w http.ResponseWriter, r *http.Request, ps httproute
 
 	ctx.Logger.Info(message + "name updated successfully")
 }
+
+func (rt *_router) GetGroupMembers(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	message := "Get Group Members: "
+
+	conversation_id_str := ps.ByName("ConversationId")
+	conversation_id, err := strconv.ParseInt(conversation_id_str, 10, 64)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + constants.InvalidConvId)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	members, err := rt.db.GetGroupMembers(conversation_id)
+	if err != nil {
+		if err.Error() == "this isn't a group chat" {
+			ctx.Logger.WithError(err).Error(message + "conversation not valid")
+			w.WriteHeader(http.StatusForbidden)
+			return
+		} else {
+			ctx.Logger.WithError(err).Error(message + "error retrieving group members")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(members)
+	if err != nil {
+		ctx.Logger.WithError(err).Error(message + "error encoding response")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.Logger.Info(message + "members retrieved successfully")
+}

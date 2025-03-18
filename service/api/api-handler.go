@@ -43,6 +43,9 @@ func (rt *_router) Handler() http.Handler {
 	// Add user to groupchat
 	rt.router.POST("/conversations/:ConversationId/members/", rt.wrap(rt.AddGRoup, true))
 
+	// Get all the group members
+	rt.router.GET("/conversations/:ConversationId/members/", rt.wrap(rt.GetGroupMembers, true))
+
 	// Remove or left groupchat
 	rt.router.DELETE("/conversations/:ConversationId/members/:UserId", rt.wrap(rt.RemoveGRoup, true))
 

@@ -93,6 +93,9 @@ type AppDatabase interface {
 	// Edit group name
 	EditName(conversation_id int64, groupName string) error
 
+	// Get group members
+	GetGroupMembers(conversation_id int64) ([]models.User, error)
+
 	// Edit profile name
 	EditProfileName(user_id int64, username string) error
 

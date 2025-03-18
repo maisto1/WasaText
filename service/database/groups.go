@@ -1,6 +1,10 @@
 package database
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/maisto1/WasaText/service/models"
+)
 
 func (db *appdbimpl) AddGroup(user_id int64, username string, conversation_id int64) error {
 	var isGroup bool
@@ -100,4 +104,53 @@ func (db *appdbimpl) EditPhoto(conversation_id int64, groupPhoto []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (db *appdbimpl) GetGroupMembers(conversation_id int64) ([]models.User, error) {
+
+	var isGroup bool
+	err := db.c.QueryRow(`
+        SELECT EXISTS(
+            SELECT 1
+            FROM Conversations
+            WHERE conversation_id = ? AND conversation_type = 'group'
+        )
+    `, conversation_id).Scan(&isGroup)
+	if err != nil {
+		return nil, err
+	}
+	if !isGroup {
+		return nil, errors.New("this isn't a group chat")
+	}
+
+	rows, err := db.c.Query(`
+        SELECT u.user_id, u.username, u.profile_photo
+        FROM Users u
+        JOIN Partecipants p ON u.user_id = p.user_id
+        WHERE p.conversation_id = ?
+    `, conversation_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var members []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.User_id, &user.Username, &user.Photo)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if members == nil {
+		members = []models.User{}
+	}
+
+	return members, nil
 }

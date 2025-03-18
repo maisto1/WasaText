@@ -437,6 +437,49 @@ paths:
   /conversations/{ConversationId}/members/:
     parameters:
       - $ref: "#/components/parameters/ConversationId"
+    get:
+      security:
+        - bearerAuth: []
+      tags: ['groups']
+      operationId: getMember
+      summary: "Get member group chat"
+      description: "Get all the member of a specific group chat"
+      responses:
+        '200':
+          description: "List of chat members"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: integer
+                      description: "Unique identifier for the user"
+                      example: 1
+                    username:
+                      type: string
+                      description: "Username of the group member"
+                      example: Maria
+                      pattern: '^.*?$'
+                      minLength: 3
+                      maxLength: 16
+                    profilePhoto:
+                      description: "Base64 encoded profile photo"
+                      type: string
+                      format: byte
+                      pattern: "^[A-Za-z0-9+/]+={0,2}$"
+                      minLength: 4
+                      maxLength: 1000000
+                      example: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEB"
+        '401':
+          description: 'Not Authorized, must be logged in'   
+        '404': 
+          description: 'Conversation not found.'
+        "500": 
+          description: "Internal server error"
+
     post:
       security:
         - bearerAuth: []
