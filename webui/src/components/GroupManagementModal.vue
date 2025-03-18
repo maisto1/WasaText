@@ -26,8 +26,13 @@ export default {
       success: null,
       showToast: false,
       toastMessage: '',
+      currentUsername: '',
       toastType: 'success'
     }
+  },
+
+  created() {
+    this.currentUsername = sessionStorage.getItem('username') || '';
   },
   
   watch: {
@@ -42,23 +47,77 @@ export default {
   
   methods: {
     async fetchGroupMembers() {
+      if (!this.conversation || !this.conversation.id) {
+        console.error('No conversation ID available');
+        return;
+      }
+      
       this.isLoading = true;
       this.groupMembers = [];
       
       try {
+   
         const response = await this.$axios.get(`/conversations/${this.conversation.id}/members/`);
-        this.groupMembers = response.data.map(member => ({
-          id: member.id,
-          username: member.username,
-          profilePhoto: member.profilePhoto
-        }));
+    
+        if (Array.isArray(response.data)) {
+          this.groupMembers = response.data.map(member => ({
+            id: member.id,
+            username: member.username,
+            profilePhoto: member.profilePhoto
+          }));
+
+          console.log("DATA DA VEDERE")
+          console.log(this.groupMembers)
+   
+        } else {
+          console.error('Unexpected API response format:', response.data);
+          this.error = 'Failed to load group members: Invalid response format';
+          this.groupMembers = [];
+        }
       } catch (error) {
         console.error('Error fetching group members:', error);
-        this.showNotification('Failed to load group members', 'error');
+        this.error = 'Failed to load group members';
+        this.groupMembers = [];
       } finally {
-        this.isLoading = false;
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 300);
       }
     },
+
+    async leaveGroup() {
+      if (!confirm('Are you sure you want to leave this group?')) {
+        return;
+      }
+      
+      this.isSubmitting = true;
+      
+      try {
+        const authToken = sessionStorage.getItem('authToken');
+        let myUserId = null;
+        
+        if (authToken && authToken.startsWith('Bearer ')) {
+          myUserId = parseInt(authToken.split(' ')[1]);
+        }
+        
+        if (!myUserId) {
+          this.showNotification('Could not determine your user ID', 'error');
+          return;
+        }
+        
+        await this.$axios.delete(`/conversations/${this.conversation.id}/members/${myUserId}`);
+        
+        this.showNotification('You have left the group', 'success');
+        this.$emit('group-left');
+        this.closeModal();
+      } catch (error) {
+        console.error('Error leaving group:', error);
+        this.showNotification('Failed to leave the group', 'error');
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+    
     async searchUsers() {
       if (!this.searchQuery.trim()) {
         this.searchResults = [];
@@ -86,10 +145,8 @@ export default {
           username: user.username
         });
         
-    
         this.groupMembers.push(user);
-        
-      
+
         this.searchQuery = '';
         this.searchResults = [];
         
@@ -119,7 +176,6 @@ export default {
       
       try {
         await this.$axios.delete(`/conversations/${this.conversation.id}/members/${user.id}`);
-        
 
         this.groupMembers = this.groupMembers.filter(member => member.id !== user.id);
         
@@ -287,6 +343,11 @@ export default {
       setTimeout(() => {
         this.showToast = false;
       }, 3000);
+    },
+    
+    retryLoadMembers() {
+      this.error = null;
+      this.fetchGroupMembers();
     }
   }
 }
@@ -320,6 +381,7 @@ export default {
           </button>
         </div>
        
+      
         <div class="modal-tabs">
           <button 
             class="tab-button" 
@@ -347,21 +409,21 @@ export default {
           </button>
         </div>
         
-       
+        
         <div class="modal-body">
-       
+         
           <div v-if="error" class="error-message mb-3">
             <i class="fas fa-exclamation-circle me-2"></i>
             {{ error }}
           </div>
           
-    
+          
           <div v-if="success" class="success-message mb-3">
             <i class="fas fa-check-circle me-2"></i>
             {{ success }}
           </div>
           
-      
+          
           <div v-if="activeTab === 'members'" class="tab-content">
             <div class="input-group mb-3">
               <span class="input-group-text">
@@ -411,22 +473,33 @@ export default {
               </div>
             </div>
             
-         
+           
             <div class="current-members-container">
               <h6 class="section-title">
                 <i class="fas fa-users me-2"></i>
                 Group members ({{ groupMembers.length }})
               </h6>
               
+          
               <div v-if="isLoading" class="text-center p-3">
-                <div class="spinner"></div>
+                <div class="members-spinner"></div>
+                <p class="mt-2 mb-0 text-muted">Loading members...</p>
               </div>
               
+             
               <div v-else-if="groupMembers.length === 0" class="empty-state">
                 <i class="fas fa-users fa-2x mb-2"></i>
                 <p>No members in this group yet</p>
+                <button 
+                  v-if="error" 
+                  @click="retryLoadMembers" 
+                  class="btn btn-sm btn-outline-primary mt-2"
+                >
+                  <i class="fas fa-sync-alt me-1"></i> Retry
+                </button>
               </div>
               
+           
               <div v-else class="members-list">
                 <div 
                   v-for="member in groupMembers" 
@@ -448,12 +521,12 @@ export default {
                     <div class="user-info ms-2 flex-grow-1">
                       <div class="username">{{ member.username }}</div>
                     </div>
-                    <button 
-                      v-if="member.username !== sessionStorage.getItem('username')"
-                      class="action-button remove-button"
-                      @click.stop="removeUserFromGroup(member)"
-                      :disabled="isSubmitting"
-                    >
+                      <button 
+                        v-if="member.username !== currentUsername" 
+                        class="action-button remove-button" 
+                        @click.stop="removeUserFromGroup(member)" 
+                        :disabled="isSubmitting"
+                      >
                       <i class="fas fa-times"></i>
                     </button>
                   </div>
@@ -462,7 +535,7 @@ export default {
             </div>
           </div>
           
-         
+        
           <div v-if="activeTab === 'photo'" class="tab-content">
             <div class="current-photo-container mb-4">
               <h6 class="section-title mb-3">Current Group Photo</h6>
@@ -525,7 +598,7 @@ export default {
             </div>
           </div>
           
-     
+          
           <div v-if="activeTab === 'name'" class="tab-content">
             <h6 class="section-title mb-3">Change Group Name</h6>
             
@@ -558,8 +631,17 @@ export default {
           </div>
         </div>
         
-     
+    
         <div class="modal-footer">
+          <button 
+            @click="leaveGroup" 
+            class="btn-leave-group me-auto"
+            :disabled="isSubmitting"
+          >
+            <i class="fas fa-sign-out-alt me-1"></i>
+            Leave Group
+          </button>
+          
           <button @click="closeModal" class="btn-close-modal">
             Close
           </button>
@@ -567,7 +649,7 @@ export default {
       </div>
     </div>
     
-
+   
     <transition name="toast">
       <div v-if="showToast" class="toast-container position-fixed p-3">
         <div class="custom-toast" :class="toastType">
@@ -1151,7 +1233,7 @@ export default {
   }
 }
 
-/* Scrollbar styling */
+
 .modal-body::-webkit-scrollbar {
   width: 6px;
 }
@@ -1163,5 +1245,29 @@ export default {
 .modal-body::-webkit-scrollbar-thumb {
   background-color: #374045;
   border-radius: 6px;
+}
+
+.btn-leave-group {
+  padding: 8px 16px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.btn-leave-group:hover:not(:disabled) {
+  background-color: #c0392b;
+  transform: scale(1.02);
+}
+
+.btn-leave-group:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

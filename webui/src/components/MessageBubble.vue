@@ -84,7 +84,7 @@ export default {
     },
 
     handleForwardClick() {
-      console.log('Opening forward modal...');
+      
       if (this.availableConversations.length === 0) {
         alert('Nessuna conversazione disponibile per l\'inoltro');
       } else {
@@ -94,19 +94,19 @@ export default {
     },
 
     handleForward(messageId, targetConversationId) {
-      console.log('Forwarding message', messageId, 'to conversation', targetConversationId);
+     
       this.$emit('forward', messageId, targetConversationId);
       this.showForwardModal = false;
     },
     
     handleReplyClick() {
-      console.log('Opening reply modal...');
+     
       this.showReplyModal = true;
       this.closeContextMenu();
     },
     
     handleSendReply(originalMessage, replyData) {
-      console.log('Sending reply to message:', originalMessage.id, 'with data:', replyData);
+      
       this.$emit('send-reply', originalMessage, replyData);
       this.showReplyModal = false;
     },

@@ -84,8 +84,6 @@ export default {
 
   methods: {
     checkIfGroupChat() {
-        console.log('Conversation data:', this.conversation);
-        console.log('Conversation type:', this.conversation?.conversationType);
       this.isGroupChat = this.conversation?.conversationType === 'group';
     },
 
@@ -98,7 +96,6 @@ export default {
       }
       
       try {
-        console.log('Fetching messages for conversation:', this.conversation.id);
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
         this.messages = response.data;
         this.$emit('refresh-conversations');
@@ -122,15 +119,15 @@ export default {
       
       try {
         if (this.isTempChat) {
-          console.log('Sending first message in temporary chat');
+        
           const textContent = messageData.content || 'Hello!';
           this.$emit('send-first-message', textContent);
         } else {
-          console.log('Sending message to existing chat:', this.conversation.id);
+          
           
         
           if (this.replyToMessage && this.replyToMessage.id) {
-            console.log('Sending reply to message:', this.replyToMessage.id);
+           
             
             const payload = {
               type: messageData.type,
@@ -190,7 +187,7 @@ export default {
 
     async forwardMessage(messageId, targetConversationId) {
       try {
-        console.log(`Forwarding message ${messageId} to conversation ${targetConversationId}`);
+        
         this.showNotification('Forwarding message...', 'success');
         
         await this.$axios.post(
@@ -207,7 +204,7 @@ export default {
     },
     
     async handleSendReply(originalMessage, replyData) {
-      console.log('Sending reply to message:', originalMessage.id, 'with data:', replyData);
+      
       
       if (this.sendingMessage) return;
       this.sendingMessage = true;

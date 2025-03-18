@@ -64,6 +64,13 @@ export default {
   },
 
   methods: {
+    
+    handleGroupLeft() {
+      this.fetchConversations();
+      this.showGroupManagement = false;
+      this.selectedConversation = null;
+      this.showNotification('You have left the group', 'success');
+    },
     loadCurrentUser() {
       this.currentUser.username = sessionStorage.getItem('username') || '';
     
@@ -157,7 +164,7 @@ export default {
     },
 
     selectUserForChat(user) {
-      console.log('Setting up temporary chat with user:', user.username);
+      
       
       this.tempChatUser = user;
       this.isTempChat = true;
@@ -174,10 +181,10 @@ export default {
     },
 
     async createConversationAndSendMessage(messageContent) {
-      console.log('createConversationAndSendMessage called with message:', messageContent);
+      
       
       if (this.creatingConversation) {
-        console.log('Already creating conversation, ignoring duplicate request');
+  
         return false;
       }
       
@@ -190,7 +197,7 @@ export default {
           return false;
         }
         
-        console.log('Creating new conversation with user:', this.tempChatUser.username);
+    
         
         const conversationResponse = await this.$axios.post('/conversations/', {
           conversationType: 'private',
@@ -199,19 +206,19 @@ export default {
         });
         
         const conversationId = conversationResponse.data.id;
-        console.log('Conversation created with ID:', conversationId);
+      
         
         const messageResponse = await this.$axios.post(`/conversations/${conversationId}/messages/`, {
           type: "text",
           content: messageContent
         });
-        console.log('Message sent successfully:', messageResponse.data);
+     
         
         await this.fetchConversations();
         
         const newConversation = this.conversations.find(c => c.id === conversationId);
         if (newConversation) {
-          console.log('Selecting new conversation:', newConversation);
+         
           this.selectedConversation = newConversation;
           this.isTempChat = false;
           this.tempChatUser = null;
@@ -229,7 +236,7 @@ export default {
     },
 
     selectConversation(conversation) {
-      console.log('Selecting existing conversation:', conversation);
+   
       this.selectedConversation = conversation;
       this.isSearching = false;
       this.isTempChat = false;
@@ -414,6 +421,7 @@ export default {
       :conversation="selectedConversation"
       @close="showGroupManagement = false"
       @group-updated="handleGroupUpdated"
+      @group-left="handleGroupLeft"
     />
   </div>
 </template>

@@ -87,17 +87,15 @@ export default {
           partecipant: ""
         };
         
-        console.log('Creating group with payload:', payload);
         
 
         const response = await this.$axios.post('/conversations/', payload);
         
         const groupId = response.data.id;
-        console.log('Group created with ID:', groupId);
+        
         
   
         for (const user of this.selectedUsers) {
-          console.log(`Adding user ${user.username} to group ${groupId}`);
           
           try {
             await this.$axios.post(`/conversations/${groupId}/members/`, {

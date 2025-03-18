@@ -25,14 +25,14 @@ export default {
       this.loading = true
       this.showToast = false
       try{
-        console.log("Logging in with username: " + this.username);
+        
         const response = await this.$axios.post("/session",{
           username: this.username
         })
-        console.log("Response: ", response.data)
+        
         this.userId = response.data.id
         this.saveToSessionStorage();
-        console.log("Token saved correctly")
+      
         this.showNotification("Login successful!", "success");
         setTimeout(() => {
           this.$router.push('/chats');
