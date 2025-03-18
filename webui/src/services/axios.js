@@ -18,14 +18,12 @@ instance.interceptors.request.use(
     }
 );
 
-// Response interceptor per gestire gli errori di autorizzazione
 instance.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
         if (error.response && error.response.status === 401) {
-            // Reindirizza al login se riceviamo un errore di autorizzazione
             window.location.href = '/#/login';
         }
         return Promise.reject(error);

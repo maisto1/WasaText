@@ -33,7 +33,10 @@ func (db *appdbimpl) GetPreviewConversations(user_id int64) ([]models.Preview, e
     )
     SELECT
         c.conversation_id,
-        COALESCE(c.name, o.other_username, '') AS conversation_name,
+        CASE 
+            WHEN c.conversation_type = 'private' THEN o.other_username 
+            ELSE COALESCE(c.name, '') 
+        END AS conversation_name,
         COALESCE(c.conversation_photo, o.other_photo, '') AS conversation_photo,
         c.conversation_type
     FROM Conversations c

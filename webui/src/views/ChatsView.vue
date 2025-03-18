@@ -84,40 +84,52 @@ export default {
       this.$router.push('/me');
     },
     
-    async fetchConversations() {
-      const isInitialLoad = this.conversations.length === 0;
-      if (isInitialLoad) {
-        this.loading = true;
+async fetchConversations() {
+  const isInitialLoad = this.conversations.length === 0;
+  if (isInitialLoad) {
+    this.loading = true;
+  }
+  
+  try {
+    const response = await this.$axios.get('/conversations/');
+
+    if (this.selectedConversation) {
+      const currentConvId = this.selectedConversation.id;
+      
+      let newConversations = response.data;
+      
+  
+      newConversations = newConversations.sort((a, b) => {
+        const timestampA = a.latestMessage ? a.latestMessage.timestamp : 0;
+        const timestampB = b.latestMessage ? b.latestMessage.timestamp : 0;
+        return timestampB - timestampA;
+      });
+      
+      if (currentConvId) {
+        const updatedConv = newConversations.find(c => c.id === currentConvId);
+        if (updatedConv) {
+          this.selectedConversation = updatedConv;
+        }
       }
       
-      try {
-        const response = await this.$axios.get('/conversations/');
-
-        if (this.selectedConversation) {
-          const currentConvId = this.selectedConversation.id;
-          
-          const newConversations = response.data;
-          
-          if (currentConvId) {
-            const updatedConv = newConversations.find(c => c.id === currentConvId);
-            if (updatedConv) {
-              this.selectedConversation = updatedConv;
-            }
-          }
-          
-          this.conversations = newConversations;
-        } else {
-          this.conversations = response.data;
-        }
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        this.error = 'Failed to load conversations';
-      } finally {
-        if (isInitialLoad) {
-          this.loading = false;
-        }
-      }
-    },
+      this.conversations = newConversations;
+    } else {
+      
+      this.conversations = response.data.sort((a, b) => {
+        const timestampA = a.latestMessage ? a.latestMessage.timestamp : 0;
+        const timestampB = b.latestMessage ? b.latestMessage.timestamp : 0;
+        return timestampB - timestampA;
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    this.error = 'Failed to load conversations';
+  } finally {
+    if (isInitialLoad) {
+      this.loading = false;
+    }
+  }
+},
     openGroupManagement() {
       this.showGroupManagement = true;
     },
