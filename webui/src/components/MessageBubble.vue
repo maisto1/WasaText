@@ -301,28 +301,26 @@ export default {
       :style="[message.type === 'media' ? {'max-width': '300px'} : {'max-width': '70%'}]"
       @contextmenu="showContextMenuHandler"
     >
-      <!-- Forwarded Label -->
       <div v-if="message.isForwarded" class="forwarded-label">
         <i class="fas fa-share"></i> Forwarded
       </div>
-      
-      <!-- Reply Info -->
-      <div v-if="message.replyTo" class="reply-info mb-2">
-        <div class="reply-preview">
-          <div class="reply-sender">
-            {{ message.replyTo.senderName }}
-          </div>
-          <div class="reply-content">
-            <template v-if="message.replyTo.content">
-              {{ message.replyTo.content }}
-            </template>
-            <template v-else>
-              <i class="fas fa-camera me-1"></i> Photo
-            </template>
-          </div>
+          
+    <div v-if="message.replyTo" class="reply-info mb-2">
+      <div class="reply-preview">
+        <div class="reply-sender">
+          {{ message.replyTo.senderName}}
+        </div>
+        <div class="reply-content">
+          <template v-if="message.replyTo.content">
+            {{ message.replyTo.content}}
+          </template>
+          <template v-else>
+            <i class="fas fa-ban me-1"></i> Messaggio eliminato
+          </template>
         </div>
       </div>
-      
+    </div>
+          
       <div v-if="!isMyMessage && showUsername" class="message-sender mb-1">
         <small class="text-light">{{ message.sender.username }}</small>
       </div>
@@ -369,7 +367,7 @@ export default {
         </span>
       </div>
       
-      <!-- Componente reazioni -->
+ 
       <EmojiReaction 
         ref="emojiReaction"
         :reactions="reactions"
@@ -382,7 +380,7 @@ export default {
       />
     </div>
     
-    <!-- Teleport del menu contestuale a body per evitare problemi di posizionamento -->
+
     <Teleport to="body">
       <div 
         v-if="showContextMenu" 
@@ -417,7 +415,7 @@ export default {
       </div>
     </Teleport>
     
-    <!-- Forward Modal -->
+    
     <ForwardModal
       v-if="showForwardModal"
       :show="showForwardModal"
@@ -427,7 +425,7 @@ export default {
       @forward="handleForward"
     />
     
-    <!-- Reply Modal -->
+    
     <ReplyModal
       v-if="showReplyModal"
       :show="showReplyModal"

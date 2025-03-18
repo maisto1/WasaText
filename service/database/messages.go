@@ -41,7 +41,8 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 
 	rows, err := db.c.Query(`
         SELECT m.message_id, m.timestamp, m.user_id, m.type, m.content, m.media, m.status, m.isForwarded, m.reply_to_id,
-               r.content as reply_content, u_reply.username as reply_sender
+               CASE WHEN r.message_id IS NULL THEN NULL ELSE r.content END as reply_content,
+               CASE WHEN r.message_id IS NULL THEN NULL ELSE u_reply.username END as reply_sender
         FROM Messages m
         LEFT JOIN Messages r ON m.reply_to_id = r.message_id
         LEFT JOIN Users u_reply ON r.user_id = u_reply.user_id
@@ -95,16 +96,26 @@ func (db *appdbimpl) GetMessages(user_id int64, conversation_id int64) ([]models
 		message.Forwarded = forwarded
 
 		if reply_to_id != nil && *reply_to_id > 0 {
-			message.ReplyTo = &models.ReplyInfo{
-				ID:      *reply_to_id,
-				Content: *reply_content,
-				Sender:  *reply_sender,
+			if reply_content != nil && reply_sender != nil {
+				message.ReplyTo = &models.ReplyInfo{
+					ID:      *reply_to_id,
+					Content: *reply_content,
+					Sender:  *reply_sender,
+				}
+			} else {
+				message.ReplyTo = &models.ReplyInfo{
+					ID:      *reply_to_id,
+					Content: "Message deleted.",
+					Sender:  "User",
+				}
 			}
 		}
 
 		err = db.c.QueryRow(`SELECT * FROM Users WHERE user_id = ?`, sender_id).Scan(&sender.User_id, &sender.Username, &sender.Photo)
 		if err != nil {
-			return messages, err
+			sender.User_id = sender_id
+			sender.Username = "User"
+
 		}
 		message.Sender = sender
 		messages = append(messages, message)

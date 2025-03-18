@@ -121,7 +121,6 @@ export default {
   },
   
   mounted() {
-    // Focus the input field when modal opens
     this.$nextTick(() => {
       if (this.$refs.replyInput) {
         this.$refs.replyInput.focus();
@@ -146,28 +145,33 @@ export default {
         </div>
         
         <div class="modal-body">
-          <!-- Original message preview -->
-          <div v-if="message" class="message-preview mb-3">
-            <div class="sender-info mb-2">
-              <strong>{{ message.sender.username }}</strong>
-            </div>
-            
-            <div class="message-content">
-              <template v-if="message.type === 'media' && message.media">
-                <div class="media-preview mb-2">
-                  <img 
-                    :src="'data:image/jpeg;base64,' + message.media"
-                    class="preview-image rounded"
-                    alt="Media preview"
-                  />
-                </div>
-              </template>
               
-              <p class="message-text">{{ message.content }}</p>
-            </div>
+        <div v-if="message" class="message-preview mb-3">
+          <div class="sender-info mb-2">
+            <strong>{{ message.sender.username }}</strong>
           </div>
           
-          <!-- Media preview -->
+          <div class="message-content">
+            <template v-if="message.deleted">
+              <p class="message-text text-muted"><i class="fas fa-ban me-1"></i> Messaggio eliminato</p>
+            </template>
+            <template v-else-if="message.type === 'media' && message.media">
+              <div class="media-preview mb-2">
+                <img 
+                  :src="'data:image/jpeg;base64,' + message.media"
+                  class="preview-image rounded"
+                  alt="Media preview"
+                />
+              </div>
+              <p v-if="message.content" class="message-text">{{ message.content }}</p>
+            </template>
+            <template v-else>
+              <p class="message-text">{{ message.content }}</p>
+            </template>
+          </div>
+        </div>
+                
+     
           <div v-if="showMediaPreview" class="reply-media-preview mb-3">
             <div class="position-relative d-inline-block">
               <img :src="mediaPreview" class="reply-preview-image rounded" alt="Media preview" />
@@ -181,7 +185,7 @@ export default {
             </div>
           </div>
           
-          <!-- Reply form -->
+         
           <form @submit.prevent="handleSubmit" class="reply-form">
             <div class="d-flex mb-2">
               <input 

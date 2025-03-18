@@ -88,27 +88,37 @@ export default {
     },
 
     async fetchMessages() {
-      if (!this.conversation?.id || this.isTempChat) return;
-      
-      const isInitialLoad = this.messages.length === 0;
-      if (isInitialLoad) {
-        this.loading = true;
-      }
-      
-      try {
-        const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
-        this.messages = response.data;
-        this.$emit('refresh-conversations');
-        this.scrollToBottom();
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        this.showNotification('Failed to load messages', 'error');
-      } finally {
+        if (!this.conversation?.id || this.isTempChat) return;
+        
+        const isInitialLoad = this.messages.length === 0;
         if (isInitialLoad) {
-          this.loading = false;
+          this.loading = true;
         }
-      }
-    },
+        
+        try {
+          console.log('Fetching messages for conversation:', this.conversation.id);
+          const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
+          
+       
+          this.messages = response.data.map(msg => {
+
+            if (msg.ReplyTo && !msg.ReplyTo.Content) {
+              msg.ReplyTo.Content = "Messaggio non disponibile";
+            }
+            return msg;
+          });
+          
+          this.$emit('refresh-conversations');
+          this.scrollToBottom();
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+          this.showNotification('Failed to load messages', 'error');
+        } finally {
+          if (isInitialLoad) {
+            this.loading = false;
+          }
+        }
+      },
 
     async sendMessage(messageData) {
       if (this.sendingMessage) return;
@@ -173,18 +183,27 @@ export default {
         this.sendingMessage = false;
       }
     },
-
     async deleteMessage(messageId) {
       try {
         await this.$axios.delete(`/conversations/${this.conversation.id}/messages/${messageId}`);
+        
+       
         this.messages = this.messages.filter(msg => msg.id !== messageId);
+        
+        
+        this.messages.forEach(msg => {
+          if (msg.ReplyTo && msg.ReplyTo.ID === messageId) {
+          
+            msg.ReplyTo.Content = null;
+          }
+        });
+        
         this.showNotification('Message deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting message:', error);
         this.showNotification('Failed to delete message', 'error');
       }
     },
-
     async forwardMessage(messageId, targetConversationId) {
       try {
         
