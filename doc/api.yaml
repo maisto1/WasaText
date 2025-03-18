@@ -454,7 +454,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    user_id:
+                    id:
                       type: integer
                       description: "Unique identifier for the user"
                       example: 1
