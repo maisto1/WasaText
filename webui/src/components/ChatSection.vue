@@ -84,19 +84,9 @@ export default {
 
   methods: {
     checkIfGroupChat() {
-      if (this.conversation) {
-        if (this.conversation.conversationType) {
-          this.isGroupChat = this.conversation.conversationType === 'group';
-        }
-        
-        else if (this.conversation.name) {
-          this.isGroupChat = this.conversation.name.toLowerCase().includes('group');
-        }
-        
-        else if (this.conversation.partecipants && this.conversation.partecipants.length > 2) {
-          this.isGroupChat = true;
-        }
-      }
+        console.log('Conversation data:', this.conversation);
+        console.log('Conversation type:', this.conversation?.conversationType);
+      this.isGroupChat = this.conversation?.conversationType === 'group';
     },
 
     async fetchMessages() {
@@ -376,7 +366,7 @@ export default {
 
 <template>
   <div class="chat-section d-flex flex-column h-100">
-    <div class="chat-header p-3 d-flex align-items-center border-bottom">
+    <div class="chat-header p-3 d-flex align-items-center justify-content-between border-bottom">
       <div class="d-flex align-items-center">
         <div class="avatar-container" :style="{ backgroundColor: getAvatarColor(conversation.name) }">
           <img 
@@ -394,7 +384,17 @@ export default {
           <small v-if="isTempChat" class="text-light-grey">New chat</small>
         </div>
       </div>
+
+      <button 
+        v-if="isGroupChat"
+        @click="$emit('open-group-settings')" 
+        class="btn-group-settings"
+        title="Manage Group"
+      >
+        <i class="fas fa-cog"></i>
+      </button>
     </div>
+
 
     <div ref="messagesContainer" class="messages-container flex-grow-1 p-3 overflow-auto">
       <div v-if="loading" class="d-flex justify-content-center align-items-center h-100">
@@ -533,5 +533,24 @@ export default {
     transform: translateX(100%);
     opacity: 0;
   }
+}
+
+.btn-group-settings {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2a3942;
+  color: #e9edef;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-group-settings:hover {
+  background-color: #36434a;
+  color: #00a884;
+  transform: rotate(30deg);
 }
 </style>

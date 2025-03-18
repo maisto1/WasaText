@@ -5,6 +5,7 @@ import SearchBar from '../components/SearchBar.vue'
 import ChatSection from '../components/ChatSection.vue'
 import ForwardModal from '../components/ForwardModal.vue'
 import CreateGroupModal from '../components/CreateGroupModal.vue'
+import GroupManagementModal from '../components/GroupManagementModal.vue'
 
 export default {
   components: {
@@ -13,7 +14,8 @@ export default {
     SearchBar,
     ChatSection,
     ForwardModal,
-    CreateGroupModal
+    CreateGroupModal,
+    GroupManagementModal
   },
   
   data() {
@@ -32,6 +34,7 @@ export default {
       creatingConversation: false,
       pollingInterval: null,
       pollingDelay: 1000,
+      showGroupManagement: false,
       currentUser: {
         username: '',
         profilePhoto: null
@@ -108,7 +111,15 @@ export default {
         }
       }
     },
-    
+    openGroupManagement() {
+      this.showGroupManagement = true;
+    },
+
+    handleGroupUpdated() {
+      this.fetchConversations();
+      this.showNotification('Group updated successfully', 'success');
+    },
+
     startPolling() {
       this.stopPolling();
 
@@ -367,14 +378,15 @@ export default {
           <p class="text-secondary">Select a conversation or search for a user to start chatting</p>
         </div>
       </div>
-      <ChatSection 
-        v-else 
-        :conversation="selectedConversation"
-        :is-temp-chat="isTempChat"
-        :conversations="conversations"
-        @refresh-conversations="fetchConversations"
-        @send-first-message="createConversationAndSendMessage"
-      />
+    <ChatSection 
+      v-else 
+      :conversation="selectedConversation"
+      :is-temp-chat="isTempChat"
+      :conversations="conversations"
+      @refresh-conversations="fetchConversations"
+      @send-first-message="createConversationAndSendMessage"
+      @open-group-settings="openGroupManagement"
+    />
     </div>
 
     <CreateGroupModal 
@@ -395,6 +407,14 @@ export default {
         </div>
       </div>
     </transition>
+
+    <GroupManagementModal 
+      v-if="selectedConversation && selectedConversation.conversationType === 'group'"
+      :show="showGroupManagement" 
+      :conversation="selectedConversation"
+      @close="showGroupManagement = false"
+      @group-updated="handleGroupUpdated"
+    />
   </div>
 </template>
 
