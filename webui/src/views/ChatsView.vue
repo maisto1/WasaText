@@ -3,7 +3,6 @@ import ConversationItem from '../components/ConversationItem.vue'
 import UserSearchResult from '../components/UserSearchResult.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ChatSection from '../components/ChatSection.vue'
-import ForwardModal from '../components/ForwardModal.vue'
 import CreateGroupModal from '../components/CreateGroupModal.vue'
 import GroupManagementModal from '../components/GroupManagementModal.vue'
 
@@ -13,7 +12,6 @@ export default {
     UserSearchResult,
     SearchBar,
     ChatSection,
-    ForwardModal,
     CreateGroupModal,
     GroupManagementModal
   },

@@ -1,13 +1,12 @@
 <script>
 import ForwardModal from './ForwardModal.vue';
 import ReplyModal from './ReplyModal.vue';
-import EmojiReaction from './EmojiReaction.vue';
 
 export default {
   components: {
     ForwardModal,
     ReplyModal,
-    EmojiReaction
+
   },
   
   props: {
