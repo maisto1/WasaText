@@ -54,24 +54,20 @@ export default {
       return this.reactions.some(reaction => reaction.username === this.myUsername);
     },
     
-
     myReaction() {
       return this.reactions.find(reaction => reaction.username === this.myUsername);
     }
   },
   
   methods: {
-
     openEmojiPicker() {
       this.showEmojiPicker = true;
     },
     
-
     closeEmojiPicker() {
       this.showEmojiPicker = false;
     },
     
-
     async selectEmoji(emojiObj) {
       this.closeEmojiPicker();
       
@@ -82,16 +78,12 @@ export default {
         const emoji = emojiObj.emoji;
         
         if (this.hasReacted) {
-
           if (this.myReaction.emoji === emoji) {
-
             await this.removeReaction();
           } else {
-
             await this.updateReaction(emoji);
           }
         } else {
-
           await this.addReaction(emoji);
         }
       } catch (error) {
@@ -101,21 +93,16 @@ export default {
       }
     },
     
-   
     getReactionStyle(emoji) {
-
       const emojiObj = this.availableEmojis.find(e => e.emoji === emoji);
       
-
       if (emojiObj) {
         if (this.reactions.some(r => r.username === this.myUsername && r.emoji === emoji)) {
-
           return {
             backgroundColor: emojiObj.color + '40',
             borderLeft: `3px solid ${emojiObj.color}`
           };
         } else {
-       
           return {
             backgroundColor: emojiObj.color + '20'
           };
@@ -125,26 +112,21 @@ export default {
       return {};
     },
     
-  
     async handleReactionBadgeClick(emoji) {
       if (this.isAddingReaction) return;
       
       try {
         this.isAddingReaction = true;
         
-   
         const userReactionWithEmoji = this.reactions.find(r => 
           r.username === this.myUsername && r.emoji === emoji
         );
         
         if (userReactionWithEmoji) {
-  
           await this.removeReaction();
         } else if (this.hasReacted) {
-          
           await this.updateReaction(emoji);
         } else {
-     
           await this.addReaction(emoji);
         }
       } catch (error) {
@@ -154,10 +136,8 @@ export default {
       }
     },
     
-
     async addReaction(emoji) {
       try {
-     
         const response = await this.$axios.post(`/conversations/${this.conversationId}/messages/${this.messageId}/comments/`, {
           content: `reaction:${emoji}`
         });
@@ -174,13 +154,10 @@ export default {
       }
     },
     
- 
     async updateReaction(emoji) {
       try {
-      
         await this.removeReaction();
         
-   
         const response = await this.$axios.post(`/conversations/${this.conversationId}/messages/${this.messageId}/comments/`, {
           content: `reaction:${emoji}`
         });
@@ -198,7 +175,6 @@ export default {
       }
     },
     
-
     async removeReaction() {
       try {
         if (!this.myReaction || !this.myReaction.id) {
@@ -241,14 +217,26 @@ export default {
       <div 
         v-for="(reactors, emoji) in groupedReactions" 
         :key="emoji"
-        class="reaction-badge"
-        :class="{ 'my-reaction': reactors.some(r => r.username === myUsername) }"
-        :title="showReactors(emoji)"
-        @click="handleReactionBadgeClick(emoji)"
-        :style="getReactionStyle(emoji)"
+        class="reaction-badge-wrapper"
       >
-        <span class="emoji">{{ emoji }}</span>
-        <span class="count">{{ reactors.length }}</span>
+        <div 
+          class="reaction-badge"
+          :class="{ 'my-reaction': reactors.some(r => r.username === myUsername) }"
+          :title="showReactors(emoji)"
+          @click="handleReactionBadgeClick(emoji)"
+          :style="getReactionStyle(emoji)"
+        >
+          <span class="emoji">{{ emoji }}</span>
+          <span class="count">{{ reactors.length }}</span>
+        </div>
+        
+        <div class="reactors-dropdown">
+          <div class="reactors-list">
+            <div v-for="reactor in reactors" :key="reactor.id" class="reactor-item">
+              {{ reactor.username }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -294,6 +282,17 @@ export default {
   gap: 4px;
 }
 
+.reaction-badge-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.reaction-badge-wrapper:hover .reactors-dropdown {
+  display: block;
+}
+
 .reaction-badge {
   background-color: #2a3942;
   border-radius: 10px;
@@ -303,8 +302,6 @@ export default {
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-right: 4px;
-  margin-bottom: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -325,6 +322,44 @@ export default {
   font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.reactors-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #202c33;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  margin-bottom: 8px;
+  z-index: 10;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.reactors-dropdown:after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #202c33;
+}
+
+.reactor-item {
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  color: #e9edef;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .emoji-modal-overlay {
