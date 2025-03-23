@@ -32,7 +32,8 @@ export default {
         { emoji: '🎉', color: '#FF8F5F' },
         { emoji: '🔥', color: '#FF5F5F' }
       ],
-      isAddingReaction: false
+      isAddingReaction: false,
+      error: null
     }
   },
   
@@ -62,6 +63,7 @@ export default {
   methods: {
     openEmojiPicker() {
       this.showEmojiPicker = true;
+      this.error = null;
     },
     
     closeEmojiPicker() {
@@ -75,6 +77,7 @@ export default {
       
       try {
         this.isAddingReaction = true;
+        this.error = null;
         const emoji = emojiObj.emoji;
         
         if (this.hasReacted) {
@@ -88,6 +91,7 @@ export default {
         }
       } catch (error) {
         console.error('Error handling reaction:', error);
+        this.error = 'Failed to add reaction. Please try again.';
       } finally {
         this.isAddingReaction = false;
       }
@@ -117,6 +121,7 @@ export default {
       
       try {
         this.isAddingReaction = true;
+        this.error = null;
         
         const userReactionWithEmoji = this.reactions.find(r => 
           r.username === this.myUsername && r.emoji === emoji
@@ -131,6 +136,7 @@ export default {
         }
       } catch (error) {
         console.error('Error handling reaction badge click:', error);
+        this.error = 'Failed to update reaction. Please try again.';
       } finally {
         this.isAddingReaction = false;
       }
@@ -138,9 +144,23 @@ export default {
     
     async addReaction(emoji) {
       try {
+       
+        const authToken = sessionStorage.getItem('authToken');
+        if (!authToken) {
+          console.error('No auth token found');
+          this.error = 'Authentication error. Please log in again.';
+          return;
+        }
+        
         const response = await this.$axios.post(`/conversations/${this.conversationId}/messages/${this.messageId}/comments/`, {
           content: `reaction:${emoji}`
         });
+        
+       
+        if (!response || !response.data || !response.data.id) {
+          console.error('Invalid response from server:', response);
+          throw new Error('Invalid server response');
+        }
         
         this.$emit('reaction-added', {
           id: response.data.id,
@@ -151,6 +171,19 @@ export default {
         });
       } catch (error) {
         console.error('Error adding reaction:', error);
+     
+        if (error.response) {
+          if (error.response.status === 403) {
+            this.error = 'Permission denied. You cannot react to this message.';
+          } else if (error.response.status === 404) {
+            this.error = 'Message not found or has been deleted.';
+          } else {
+            this.error = `Error (${error.response.status}): ${error.response.data || 'Failed to add reaction'}`;
+          }
+        } else {
+          this.error = 'Network error. Please check your connection.';
+        }
+        throw error;
       }
     },
     
@@ -162,6 +195,12 @@ export default {
           content: `reaction:${emoji}`
         });
         
+     
+        if (!response || !response.data || !response.data.id) {
+          console.error('Invalid response from server:', response);
+          throw new Error('Invalid server response');
+        }
+        
         this.$emit('reaction-updated', {
           id: response.data.id,
           messageId: this.messageId,
@@ -172,6 +211,19 @@ export default {
         });
       } catch (error) {
         console.error('Error updating reaction:', error);
+        
+        
+        if (error.response) {
+          if (error.response.status === 403) {
+            this.error = 'Permission denied. You cannot update this reaction.';
+          } else {
+            this.error = `Error (${error.response.status}): ${error.response.data || 'Failed to update reaction'}`;
+          }
+        } else {
+          this.error = 'Network error. Please check your connection.';
+        }
+        
+        throw error;
       }
     },
     
@@ -179,6 +231,7 @@ export default {
       try {
         if (!this.myReaction || !this.myReaction.id) {
           console.error('Cannot remove reaction: reaction ID not found');
+          this.error = 'Reaction ID not found. Cannot remove reaction.';
           return;
         }
         
@@ -191,6 +244,19 @@ export default {
         });
       } catch (error) {
         console.error('Error removing reaction:', error);
+        
+        
+        if (error.response) {
+          if (error.response.status === 403) {
+            this.error = 'Permission denied. You cannot remove this reaction.';
+          } else {
+            this.error = `Error (${error.response.status}): ${error.response.data || 'Failed to remove reaction'}`;
+          }
+        } else {
+          this.error = 'Network error. Please check your connection.';
+        }
+        
+        throw error;
       }
     },
     
@@ -240,6 +306,10 @@ export default {
       </div>
     </div>
     
+    <div v-if="error" class="reaction-error mt-1">
+      <small>{{ error }}</small>
+    </div>
+    
     <Teleport to="body">
       <div v-if="showEmojiPicker" class="emoji-modal-overlay" @click="closeEmojiPicker">
         <div class="emoji-modal" @click.stop>
@@ -249,6 +319,12 @@ export default {
               <i class="fas fa-times"></i>
             </button>
           </div>
+          
+          <div v-if="error" class="emoji-error-message">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ error }}
+          </div>
+          
           <div class="emoji-container">
             <button 
               v-for="emojiObj in availableEmojis" 
@@ -257,6 +333,7 @@ export default {
               :style="{ backgroundColor: emojiObj.color + '30' }"
               @click="selectEmoji(emojiObj)"
               :title="emojiObj.label"
+              :disabled="isAddingReaction"
             >
               <span class="emoji-circle" :style="{ backgroundColor: emojiObj.color + '50' }">
                 {{ emojiObj.emoji }}
@@ -273,6 +350,7 @@ export default {
 .message-reactions {
   display: flex;
   align-items: center;
+  flex-direction: column;
   margin-top: 4px;
 }
 
@@ -280,6 +358,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  width: 100%;
 }
 
 .reaction-badge-wrapper {
@@ -322,6 +401,12 @@ export default {
   font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.reaction-error {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  width: 100%;
 }
 
 .reactors-dropdown {
@@ -399,6 +484,14 @@ export default {
   color: #e9edef;
 }
 
+.emoji-error-message {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #36434a;
+}
+
 .close-button {
   background: transparent;
   border: none;
@@ -440,8 +533,13 @@ export default {
   height: 60px;
 }
 
-.emoji-button:hover {
+.emoji-button:not(:disabled):hover {
   transform: scale(1.1);
+}
+
+.emoji-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .emoji-circle {

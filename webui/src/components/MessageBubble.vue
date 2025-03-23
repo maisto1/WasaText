@@ -1,12 +1,13 @@
 <script>
 import ForwardModal from './ForwardModal.vue';
 import ReplyModal from './ReplyModal.vue';
+import EmojiReaction from './EmojiReaction.vue';
 
 export default {
   components: {
     ForwardModal,
     ReplyModal,
-
+    EmojiReaction
   },
   
   props: {
@@ -50,7 +51,6 @@ export default {
     window.addEventListener('click', this.closeContextMenu);
     window.addEventListener('scroll', this.closeContextMenu);
     
-
     this.startCommentsPolling();
   },
   
@@ -58,7 +58,6 @@ export default {
     window.removeEventListener('click', this.closeContextMenu);
     window.removeEventListener('scroll', this.closeContextMenu);
     
-
     this.stopCommentsPolling();
   },
   
@@ -83,7 +82,6 @@ export default {
     },
 
     handleForwardClick() {
-      
       if (this.availableConversations.length === 0) {
         alert('Nessuna conversazione disponibile per l\'inoltro');
       } else {
@@ -93,19 +91,16 @@ export default {
     },
 
     handleForward(messageId, targetConversationId) {
-     
       this.$emit('forward', messageId, targetConversationId);
       this.showForwardModal = false;
     },
     
     handleReplyClick() {
-     
       this.showReplyModal = true;
       this.closeContextMenu();
     },
     
     handleSendReply(originalMessage, replyData) {
-      
       this.$emit('send-reply', originalMessage, replyData);
       this.showReplyModal = false;
     },
@@ -159,27 +154,21 @@ export default {
     },
     
     showContextMenuHandler(event) {
-
       event.preventDefault();
       event.stopPropagation();
       
-
       this.closeContextMenu();
       
-
       const x = event.clientX;
       const y = event.clientY;
 
       const menuWidth = 180;
       const menuHeight = 180;
       
-
       const adjustedX = Math.min(x, window.innerWidth - menuWidth - 10);
-      
       
       const adjustedY = Math.min(y, window.innerHeight - menuHeight - 10);
       
-     
       this.contextMenuPosition = { x: adjustedX, y: adjustedY };
       this.showContextMenu = true;
       
@@ -189,7 +178,6 @@ export default {
     },
     
     addClickOutsideListener() {
-
       document.addEventListener('click', this.handleClickOutside);
       document.addEventListener('contextmenu', this.handleClickOutside);
     },
@@ -202,20 +190,22 @@ export default {
     },
     
     closeContextMenu() {
-
       document.removeEventListener('click', this.handleClickOutside);
       document.removeEventListener('contextmenu', this.handleClickOutside);
       
       this.showContextMenu = false;
     },
     
-
     async fetchComments() {
       try {
         const response = await this.$axios.get(`/conversations/${this.conversationId}/messages/${this.message.id}/comments/`);
+        if (!response || !response.data) {
+          console.error('Invalid response from server:', response);
+          return;
+        }
+        
         this.comments = response.data;
         
-      
         this.processReactionsFromComments();
       } catch (error) {
         console.error('Error fetching comments/reactions:', error);
@@ -223,10 +213,8 @@ export default {
     },
     
     processReactionsFromComments() {
-    
       this.reactions = [];
       
-
       this.comments.forEach(comment => {
         if (comment.content && comment.content.startsWith('reaction:')) {
           const emoji = comment.content.replace('reaction:', '');
@@ -241,14 +229,12 @@ export default {
         }
       });
       
-     
       this.reactions.sort((a, b) => {
         return new Date(b.timestamp) - new Date(a.timestamp);
       });
     },
     
     startCommentsPolling() {
-   
       this.fetchComments();
       
       this.reactionPollingTimer = setInterval(() => {
@@ -263,14 +249,11 @@ export default {
       }
     },
     
-
     handleReactionAdded(reaction) {
-
       this.reactions.push(reaction);
     },
     
     handleReactionUpdated(updatedReaction) {
- 
       const index = this.reactions.findIndex(r => r.username === updatedReaction.username);
       if (index !== -1) {
         this.reactions[index].emoji = updatedReaction.emoji;
@@ -278,14 +261,11 @@ export default {
     },
     
     handleReactionRemoved(removedReaction) {
-
       this.reactions = this.reactions.filter(r => r.username !== removedReaction.username);
     },
     
-
     handleReactClick() {
       this.closeContextMenu();
-
       this.$refs.emojiReaction.openEmojiPicker();
     }
   }
@@ -366,7 +346,6 @@ export default {
         </span>
       </div>
       
- 
       <EmojiReaction 
         ref="emojiReaction"
         :reactions="reactions"
@@ -442,7 +421,6 @@ export default {
   word-break: break-word;
 }
 
-/* Stile del menu contestuale */
 .message-context-menu {
   position: fixed;
   z-index: 9999;
