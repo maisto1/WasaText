@@ -44,8 +44,7 @@ export default {
 
   computed: {
     forwardingConversations() {
-      if (!this.conversations || !this.conversation) return [];
-      return this.conversations.filter(conv => conv.id !== this.conversation.id);
+      return this.conversations; 
     }
   },
 

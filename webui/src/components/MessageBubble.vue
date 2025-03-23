@@ -82,11 +82,7 @@ export default {
     },
 
     handleForwardClick() {
-      if (this.availableConversations.length === 0) {
-        alert('Nessuna conversazione disponibile per l\'inoltro');
-      } else {
-        this.showForwardModal = true;
-      }
+      this.showForwardModal = true;
       this.closeContextMenu();
     },
 
