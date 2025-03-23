@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/maisto1/WasaText/service/api/reqcontext"
@@ -64,15 +65,13 @@ func (rt *_router) EditProfilePhoto(w http.ResponseWriter, r *http.Request, ps h
 }
 
 func (rt *_router) EditProfileName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	message := "Edit Profile photo: "
-
+	message := "Edit Profile name: "
 	var requestBody struct {
 		Username string `json:"username"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-
 	err := decoder.Decode(&requestBody)
 	if err != nil {
 		ctx.Logger.WithError(err).Error(message + constants.ErrDecBody)
@@ -82,13 +81,18 @@ func (rt *_router) EditProfileName(w http.ResponseWriter, r *http.Request, ps ht
 
 	err = rt.db.EditProfileName(ctx.User_id, requestBody.Username)
 	if err != nil {
-		ctx.Logger.WithError(err).Error(message + "user  not found")
+		if strings.Contains(err.Error(), "username already exists") {
+			ctx.Logger.WithError(err).Error(message + "username already exists")
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		ctx.Logger.WithError(err).Error(message + "user not found")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
-
 	ctx.Logger.Info(message + "username updated successfully")
 }

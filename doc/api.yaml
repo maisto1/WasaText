@@ -569,6 +569,8 @@ paths:
                 description: "Invalid input data"
               "404":
                 description: "Conversation not found"
+              "409":
+                description: "Username already used"
               "500":
                 description: "Internal server error"
   /conversations/{ConversationId}/photo:

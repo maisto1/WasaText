@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/maisto1/WasaText/service/models"
@@ -36,13 +37,27 @@ func (db *appdbimpl) GetUsers(names string) []models.User {
 }
 
 func (db *appdbimpl) EditProfileName(user_id int64, username string) error {
-	_, err := db.c.Exec("UPDATE Users SET username = ? WHERE user_id = ?", username, user_id)
+	var count int
+	err := db.c.QueryRow(`
+        SELECT COUNT(*) 
+        FROM Users 
+        WHERE username = ? AND user_id != ?`,
+		username, user_id).Scan(&count)
+
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return fmt.Errorf("username already exists")
+	}
+
+	_, err = db.c.Exec("UPDATE Users SET username = ? WHERE user_id = ?", username, user_id)
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 func (db *appdbimpl) EditProfilePhoto(user_id int64, photo []byte) error {

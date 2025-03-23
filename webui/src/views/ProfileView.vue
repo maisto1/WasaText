@@ -66,8 +66,21 @@ export default {
         this.showNotification('Username updated successfully', 'success');
       } catch (error) {
         console.error('Error updating username:', error);
-        if (error.response && error.response.status === 400) {
-          this.showNotification('Invalid username format', 'error');
+        
+        if (error.response) {
+          switch (error.response.status) {
+            case 409:
+              this.showNotification('Username already exists, please try another one', 'error');
+              break;
+            case 400:
+              this.showNotification('Invalid username format', 'error');
+              break;
+            case 404:
+              this.showNotification('User not found', 'error');
+              break;
+            default:
+              this.showNotification('Failed to update username', 'error');
+          }
         } else {
           this.showNotification('Failed to update username', 'error');
         }
