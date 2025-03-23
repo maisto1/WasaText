@@ -37,7 +37,7 @@ func (rt *_router) AddGRoup(w http.ResponseWriter, r *http.Request, ps httproute
 
 	err = rt.db.AddGroup(ctx.User_id, requestBody.Username, conversation_id)
 	if err != nil {
-		if err.Error() == "user doesn't have private conversation" || err.Error() == "this isn't a group chat" {
+		if err.Error() == "user doesn't have private conversation" || err.Error() == constants.NoGroupChat {
 			ctx.Logger.WithError(err).Error(message + "conversation  not valid or no private conversation")
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -76,7 +76,7 @@ func (rt *_router) RemoveGRoup(w http.ResponseWriter, r *http.Request, ps httpro
 
 	err = rt.db.RemoveGroup(ctx.User_id, conversation_id, user_id)
 	if err != nil {
-		if err.Error() == "this isn't a group chat" {
+		if err.Error() == constants.NoGroupChat {
 			ctx.Logger.WithError(err).Error(message + "conversation  not valid or no private conversation")
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -120,7 +120,7 @@ func (rt *_router) EditPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 
 	err = rt.db.EditPhoto(conversation_id, requestBody.GroupPhoto)
 	if err != nil {
-		if err.Error() == "this isn't a group chat" {
+		if err.Error() == constants.NoGroupChat {
 			ctx.Logger.WithError(err).Error(message + "conversation  not valid or no private conversation")
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -164,7 +164,7 @@ func (rt *_router) EditName(w http.ResponseWriter, r *http.Request, ps httproute
 
 	err = rt.db.EditName(conversation_id, requestBody.GroupName)
 	if err != nil {
-		if err.Error() == "this isn't a group chat" {
+		if err.Error() == constants.NoGroupChat {
 			ctx.Logger.WithError(err).Error(message + "conversation  not valid or no private conversation")
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -195,7 +195,7 @@ func (rt *_router) GetGroupMembers(w http.ResponseWriter, r *http.Request, ps ht
 
 	members, err := rt.db.GetGroupMembers(conversation_id)
 	if err != nil {
-		if err.Error() == "this isn't a group chat" {
+		if err.Error() == constants.NoGroupChat {
 			ctx.Logger.WithError(err).Error(message + "conversation not valid")
 			w.WriteHeader(http.StatusForbidden)
 			return
