@@ -412,16 +412,17 @@ export default {
 
 
     <div ref="messagesContainer" class="messages-container flex-grow-1 p-3 overflow-auto">
-      <div v-if="loading" class="d-flex justify-content-center align-items-center h-100">
+      <div v-if="loading && !isGroupChat" class="d-flex justify-content-center align-items-center h-100">
         <div class="spinner-border text-light" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
 
-      <template v-else-if="isTempChat">
-        <div class="text-center text-light-grey py-5">
-          <p>Type a message to start the conversation</p>
-        </div>
+    <template v-else-if="messages.length === 0">
+      <div class="text-center text-light-grey py-5">
+        <i class="fas fa-comment-dots fa-3x mb-3"></i>
+        <p>Send a message to start the conversation</p>
+      </div>
       </template>
 
       <template v-else>
