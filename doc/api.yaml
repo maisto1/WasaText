@@ -450,7 +450,10 @@ paths:
           content:
             application/json:
               schema:
+                description: "List of all memebrs of group"
                 type: array
+                minItems: 0
+                maxItems: 50
                 items:
                   type: object
                   properties:
