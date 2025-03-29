@@ -87,23 +87,25 @@ export default {
           partecipant: ""
         };
         
-        
-
         const response = await this.$axios.post('/conversations/', payload);
         
         const groupId = response.data.id;
         
-        
-  
-        for (const user of this.selectedUsers) {
+        if (this.selectedUsers.length > 0) {
+          const addPromises = [];
           
-          try {
-            await this.$axios.post(`/conversations/${groupId}/members/`, {
-              username: user.username
-            });
-          } catch (error) {
-            console.error(`Error adding user ${user.username} to group:`, error);
+          for (const user of this.selectedUsers) {
+            addPromises.push(
+              this.$axios.post(`/conversations/${groupId}/members/`, {
+                username: user.username
+              }).catch(error => {
+                console.error(`Error adding user ${user.username} to group:`, error);
+                return null;
+              })
+            );
           }
+          
+          await Promise.all(addPromises);
         }
         
         this.$emit('created');

@@ -82,52 +82,53 @@ export default {
       this.$router.push('/me');
     },
     
-async fetchConversations() {
-  const isInitialLoad = this.conversations.length === 0;
-  if (isInitialLoad) {
-    this.loading = true;
-  }
-  
-  try {
-    const response = await this.$axios.get('/conversations/');
-
-    if (this.selectedConversation) {
-      const currentConvId = this.selectedConversation.id;
-      
-      let newConversations = response.data;
-      
-  
-      newConversations = newConversations.sort((a, b) => {
-        const timestampA = a.latestMessage ? a.latestMessage.timestamp : 0;
-        const timestampB = b.latestMessage ? b.latestMessage.timestamp : 0;
-        return timestampB - timestampA;
-      });
-      
-      if (currentConvId) {
-        const updatedConv = newConversations.find(c => c.id === currentConvId);
-        if (updatedConv) {
-          this.selectedConversation = updatedConv;
-        }
+    async fetchConversations() {
+      const isInitialLoad = this.conversations.length === 0;
+      if (isInitialLoad) {
+        this.loading = true;
       }
       
-      this.conversations = newConversations;
-    } else {
-      
-      this.conversations = response.data.sort((a, b) => {
-        const timestampA = a.latestMessage ? a.latestMessage.timestamp : 0;
-        const timestampB = b.latestMessage ? b.latestMessage.timestamp : 0;
-        return timestampB - timestampA;
-      });
-    }
-  } catch (error) {
-    console.error('Error fetching conversations:', error);
-    this.error = 'Failed to load conversations';
-  } finally {
-    if (isInitialLoad) {
-      this.loading = false;
-    }
-  }
-},
+      try {
+        const response = await this.$axios.get('/conversations/');
+        
+        const uniqueConversations = [];
+        const uniqueIds = new Set();
+        
+        response.data.forEach(conversation => {
+          if (!uniqueIds.has(conversation.id)) {
+            uniqueIds.add(conversation.id);
+            uniqueConversations.push(conversation);
+          }
+        });
+        
+        const sortedConversations = uniqueConversations.sort((a, b) => {
+          const timestampA = a.latestMessage ? a.latestMessage.timestamp : 0;
+          const timestampB = b.latestMessage ? b.latestMessage.timestamp : 0;
+          return timestampB - timestampA;
+        });
+        
+        if (this.selectedConversation) {
+          const currentConvId = this.selectedConversation.id;
+          
+          if (currentConvId) {
+            const updatedConv = sortedConversations.find(c => c.id === currentConvId);
+            if (updatedConv) {
+              this.selectedConversation = updatedConv;
+            }
+          }
+        }
+        
+        this.conversations = sortedConversations;
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+        this.error = 'Failed to load conversations';
+      } finally {
+        if (isInitialLoad) {
+          this.loading = false;
+        }
+      }
+    },
+    
     openGroupManagement() {
       this.showGroupManagement = true;
     },
@@ -174,8 +175,6 @@ async fetchConversations() {
     },
 
     selectUserForChat(user) {
-      
-      
       this.tempChatUser = user;
       this.isTempChat = true;
       
@@ -191,10 +190,7 @@ async fetchConversations() {
     },
 
     async createConversationAndSendMessage(messageContent) {
-      
-      
       if (this.creatingConversation) {
-  
         return false;
       }
       
@@ -207,8 +203,6 @@ async fetchConversations() {
           return false;
         }
         
-    
-        
         const conversationResponse = await this.$axios.post('/conversations/', {
           conversationType: 'private',
           partecipant: this.tempChatUser.username,
@@ -217,18 +211,15 @@ async fetchConversations() {
         
         const conversationId = conversationResponse.data.id;
       
-        
         const messageResponse = await this.$axios.post(`/conversations/${conversationId}/messages/`, {
           type: "text",
           content: messageContent
         });
      
-        
         await this.fetchConversations();
         
         const newConversation = this.conversations.find(c => c.id === conversationId);
         if (newConversation) {
-         
           this.selectedConversation = newConversation;
           this.isTempChat = false;
           this.tempChatUser = null;
@@ -246,7 +237,6 @@ async fetchConversations() {
     },
 
     selectConversation(conversation) {
-   
       this.selectedConversation = conversation;
       this.isSearching = false;
       this.isTempChat = false;
