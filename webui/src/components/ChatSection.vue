@@ -1,13 +1,11 @@
 <script>
 import MessageBubble from './MessageBubble.vue';
 import ChatInput from './ChatInput.vue';
-import EmojiReaction from './EmojiReaction.vue';
 
 export default {
   components: {
     MessageBubble,
     ChatInput,
-    EmojiReaction
   },
 
   props: {
