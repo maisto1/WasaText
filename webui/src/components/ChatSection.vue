@@ -34,9 +34,12 @@ export default {
       sendingMessage: false,
       isGroupChat: false,
       pollingInterval: null,
-      pollingDelay: 6000,
+      pollingDelay: 2000,
       lastMessageId: null,
-      replyToMessage: null
+      replyToMessage: null,
+      isUserScrolling: false,
+      allowScrollToBottom: true,
+      userScrollTimer: null
     }
   },
 
@@ -51,8 +54,26 @@ export default {
     this.startPolling();
   },
 
+  mounted() {
+    const container = this.$refs.messagesContainer;
+    if (container) {
+      container.addEventListener('scroll', this.handleScroll);
+      container.addEventListener('touchstart', this.handleTouchStart);
+      container.addEventListener('mousedown', this.handleUserInteraction);
+    }
+  },
+
   beforeUnmount() {
     this.stopPolling();
+    const container = this.$refs.messagesContainer;
+    if (container) {
+      container.removeEventListener('scroll', this.handleScroll);
+      container.removeEventListener('touchstart', this.handleTouchStart);
+      container.removeEventListener('mousedown', this.handleUserInteraction);
+    }
+    if (this.userScrollTimer) {
+      clearTimeout(this.userScrollTimer);
+    }
   },
 
   watch: {
@@ -63,23 +84,53 @@ export default {
         this.checkIfGroupChat();
         if (this.conversation?.id && !this.isTempChat) {
           this.fetchMessages();
+          this.allowScrollToBottom = true;
         } else if (this.isTempChat) {
           this.messages = [];
         }
-        
-
         this.replyToMessage = null;
       }
     },
     'messages': {
       deep: true,
-      handler() {
-        this.scrollToBottom();
+      handler(newMessages, oldMessages) {
+        if (newMessages.length !== oldMessages.length) {
+          if (this.allowScrollToBottom && !this.isUserScrolling) {
+            this.scrollToBottom();
+          }
+        }
       }
     }
   },
 
   methods: {
+    handleUserInteraction() {
+      this.isUserScrolling = true;
+      this.allowScrollToBottom = false;
+      
+      if (this.userScrollTimer) {
+        clearTimeout(this.userScrollTimer);
+      }
+      
+      this.userScrollTimer = setTimeout(() => {
+        this.isUserScrolling = false;
+      }, 1000);
+    },
+    
+    handleTouchStart() {
+      this.handleUserInteraction();
+    },
+    
+    handleScroll(event) {
+      const container = event.target;
+      this.handleUserInteraction();
+      
+      const scrollPosition = container.scrollTop + container.clientHeight;
+      if (scrollPosition >= container.scrollHeight - 50) {
+        this.allowScrollToBottom = true;
+      }
+    },
+    
     checkIfGroupChat() {
       this.isGroupChat = this.conversation?.conversationType === 'group';
     },
@@ -96,9 +147,7 @@ export default {
           console.log('Fetching messages for conversation:', this.conversation.id);
           const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
           
-       
           this.messages = response.data.map(msg => {
-
             if (msg.ReplyTo && !msg.ReplyTo.Content) {
               msg.ReplyTo.Content = "Messaggio non disponibile";
             }
@@ -106,7 +155,11 @@ export default {
           });
           
           this.$emit('refresh-conversations');
-          this.scrollToBottom();
+          
+          if (isInitialLoad) {
+            this.allowScrollToBottom = true;
+            this.scrollToBottom();
+          }
         } catch (error) {
           console.error('Error fetching messages:', error);
           this.showNotification('Failed to load messages', 'error');
@@ -115,7 +168,7 @@ export default {
             this.loading = false;
           }
         }
-      },
+    },
 
     async sendMessage(messageData) {
       if (this.sendingMessage) return;
@@ -126,16 +179,10 @@ export default {
       
       try {
         if (this.isTempChat) {
-        
           const textContent = messageData.content || 'Hello!';
           this.$emit('send-first-message', textContent);
         } else {
-          
-          
-        
           if (this.replyToMessage && this.replyToMessage.id) {
-           
-            
             const payload = {
               type: messageData.type,
               content: messageData.content || ''
@@ -153,7 +200,6 @@ export default {
             this.messages.push(response.data);
             this.replyToMessage = null;
           } else {
-          
             const payload = {
               type: messageData.type,
               content: messageData.content || ''
@@ -171,6 +217,7 @@ export default {
             this.messages.push(response.data);
           }
           
+          this.allowScrollToBottom = true;
           this.scrollToBottom();
         }
       } catch (error) {
@@ -180,17 +227,15 @@ export default {
         this.sendingMessage = false;
       }
     },
+    
     async deleteMessage(messageId) {
       try {
         await this.$axios.delete(`/conversations/${this.conversation.id}/messages/${messageId}`);
         
-       
         this.messages = this.messages.filter(msg => msg.id !== messageId);
-        
         
         this.messages.forEach(msg => {
           if (msg.ReplyTo && msg.ReplyTo.ID === messageId) {
-          
             msg.ReplyTo.Content = null;
           }
         });
@@ -201,9 +246,9 @@ export default {
         this.showNotification('Failed to delete message', 'error');
       }
     },
+    
     async forwardMessage(messageId, targetConversationId) {
       try {
-        
         this.showNotification('Forwarding message...', 'success');
         
         await this.$axios.post(
@@ -220,8 +265,6 @@ export default {
     },
     
     async handleSendReply(originalMessage, replyData) {
-      
-      
       if (this.sendingMessage) return;
       this.sendingMessage = true;
       
@@ -241,6 +284,7 @@ export default {
         );
         
         this.messages.push(response.data);
+        this.allowScrollToBottom = true;
         this.scrollToBottom();
         this.showNotification('Reply sent successfully', 'success');
       } catch (error) {
@@ -251,20 +295,16 @@ export default {
       }
     },
     
-    
     async handleReactionAdded(reaction) {
       console.log('Reaction added:', reaction);
-      
     },
 
     async handleReactionUpdated(reaction) {
       console.log('Reaction updated:', reaction);
-     
     },
 
     async handleReactionRemoved(reaction) {
       console.log('Reaction removed:', reaction);
-      
     },
     
     cancelReply() {
@@ -272,6 +312,8 @@ export default {
     },
 
     scrollToBottom() {
+      if (!this.allowScrollToBottom) return;
+      
       this.$nextTick(() => {
         const container = this.$refs.messagesContainer;
         if (container) {
@@ -332,7 +374,7 @@ export default {
     },
     
     async pollForNewMessages() {
-      if (!this.conversation?.id || this.isTempChat) return;
+      if (!this.conversation?.id || this.isTempChat || this.isUserScrolling) return;
       
       try {
         const response = await this.$axios.get(`/conversations/${this.conversation.id}`);
@@ -343,12 +385,26 @@ export default {
         const hasChanges = this.checkForMessageChanges(this.messages, newMessages);
         
         if (hasChanges) {
+          const isAtBottom = this.isAtBottom();
           this.messages = newMessages;
           this.$emit('refresh-conversations');
+          
+          if (isAtBottom) {
+            this.allowScrollToBottom = true;
+            this.scrollToBottom();
+          }
         }
       } catch (error) {
         console.error('Error polling for new messages:', error);
       }
+    },
+    
+    isAtBottom() {
+      const container = this.$refs.messagesContainer;
+      if (!container) return true;
+      
+      const threshold = 50;
+      return container.scrollHeight - container.clientHeight - container.scrollTop <= threshold;
     },
 
     checkForMessageChanges(oldMessages, newMessages) {
@@ -408,7 +464,6 @@ export default {
       </button>
     </div>
 
-
     <div ref="messagesContainer" class="messages-container flex-grow-1 p-3 overflow-auto">
       <div v-if="loading && !isGroupChat" class="d-flex justify-content-center align-items-center h-100">
         <div class="spinner-border text-light" role="status">
@@ -466,11 +521,17 @@ export default {
 
 <style>
 .chat-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background-color: #111b21;
+  overflow: hidden;
 }
 
 .chat-header {
   background-color: #202c33;
+  min-height: 60px;
+  z-index: 2;
 }
 
 .avatar-container {
@@ -497,9 +558,14 @@ export default {
   text-align: center;
 }
 
-
 .messages-container {
+  flex: 1;
+  overflow-y: auto;
+  height: 0;
   background-color: #0b141a;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .messages-container::-webkit-scrollbar {
